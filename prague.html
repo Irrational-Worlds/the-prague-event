@@ -1,0 +1,1862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Veridvasc—The Prague Score</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14101c;
+    --bg-deep: #0d0a13;
+    --ink: #d9cdba;
+    --ink-dim: #9a8f7e;
+    --ink-faint: #6b6358;
+    --accent: #a98bc4;
+    --accent-warm: #c9a25e;
+    --rule: #2a2334;
+    --choice-bg: rgba(169,139,196,0.04);
+    --choice-edge: rgba(169,139,196,0.18);
+    --vignette: radial-gradient(ellipse at 50% 30%, transparent 40%, rgba(0,0,0,0.55) 100%);
+    --display: 'Cormorant Garamond', serif;
+    --body: 'Spectral', serif;
+  }
+  html[data-skin="papyrus"] {
+    --bg: #ece3cf;
+    --bg-deep: #e3d8bf;
+    --ink: #2b2018;
+    --ink-dim: #5c4f3e;
+    --ink-faint: #877a64;
+    --accent: #7a4f2a;
+    --accent-warm: #8a5a23;
+    --rule: #cbbd9c;
+    --choice-bg: rgba(122,79,42,0.05);
+    --choice-edge: rgba(122,79,42,0.22);
+    --vignette: radial-gradient(ellipse at 50% 30%, transparent 55%, rgba(120,100,60,0.10) 100%);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--body);
+    font-weight: 400;
+    line-height: 1.75;
+    font-size: 1.18rem;
+    -webkit-font-smoothing: antialiased;
+    transition: background 0.6s ease, color 0.6s ease;
+    min-height: 100vh;
+  }
+  /* paper tooth—fibrous grain, both skins, drawn with layered gradients */
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image:
+      repeating-linear-gradient(94deg, rgba(0,0,0,0.012) 0 1px, transparent 1px 2px),
+      repeating-linear-gradient(2deg, rgba(0,0,0,0.010) 0 1px, transparent 1px 3px),
+      radial-gradient(circle at 18% 22%, rgba(0,0,0,0.05) 0, transparent 38%),
+      radial-gradient(circle at 82% 78%, rgba(0,0,0,0.06) 0, transparent 42%);
+    mix-blend-mode: multiply; opacity: 0.5;
+    transition: opacity 0.6s ease;
+  }
+  html[data-skin="papyrus"] body::before {
+    background-image:
+      repeating-linear-gradient(0deg, rgba(120,100,60,0.05) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgba(120,100,60,0.035) 0 1px, transparent 1px 4px),
+      radial-gradient(circle at 12% 16%, rgba(150,120,70,0.10) 0, transparent 30%),
+      radial-gradient(circle at 88% 84%, rgba(120,90,50,0.10) 0, transparent 34%),
+      radial-gradient(circle at 60% 50%, rgba(150,125,75,0.05) 0, transparent 60%);
+    opacity: 0.85;
+  }
+  /* faint fiber flecks via tiny repeating dots */
+  body::after {
+    content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image: radial-gradient(rgba(0,0,0,0.04) 0.5px, transparent 0.6px);
+    background-size: 3px 3px; opacity: 0.4; mix-blend-mode: multiply;
+    transition: opacity 0.6s ease;
+  }
+  html[data-skin="papyrus"] body::after {
+    background-image: radial-gradient(rgba(110,85,45,0.10) 0.5px, transparent 0.6px);
+    background-size: 4px 4px; opacity: 0.5;
+  }
+
+  .veil { position: fixed; inset: 0; pointer-events: none; z-index: 1; background: var(--vignette); transition: opacity 0.6s ease; }
+
+  .skin-toggle {
+    position: fixed; top: 1.1rem; right: 1.1rem; z-index: 10;
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: var(--choice-bg); border: 1px solid var(--choice-edge); color: var(--ink-dim);
+    font-family: var(--body); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 0.5rem 0.85rem; border-radius: 2px; cursor: pointer; transition: all 0.3s ease;
+  }
+  .skin-toggle:hover { color: var(--ink); border-color: var(--accent); }
+  .skin-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* the cover hides the corner toggle—the big ink buttons are the choice there */
+  html[data-on-cover] .skin-toggle { display: none; }
+
+    position: fixed; top: 1.1rem; right: 7.4rem; z-index: 10;
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: var(--choice-bg); border: 1px solid var(--choice-edge); color: var(--ink-dim);
+    font-family: var(--body); font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 0.5rem 0.85rem; border-radius: 2px; cursor: pointer; transition: all 0.3s ease;
+  }
+
+  /* ============ THE COVER—a held threshold ============ */
+  .cover {
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 3.5rem 1.6rem; text-align: center;
+    position: relative;
+  }
+  .cover-skin {
+    position: absolute; top: 2rem; right: 2rem;
+    text-align: right; margin: 0;
+  }
+  @media (max-width: 480px) {
+    .cover-skin { top: 1.2rem; right: 1.2rem; }
+  }
+  .cover-skin-label {
+    display: block; font-family: var(--body); font-style: italic;
+    font-size: 0.8rem; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--ink-faint); margin-bottom: 0.9rem;
+  }
+  .cover-skin-btns { display: inline-flex; gap: 0.7rem; }
+  .cover-ink {
+    background: var(--choice-bg); border: 1px solid var(--choice-edge); color: var(--ink-dim);
+    font-family: var(--display); font-size: 1.15rem; letter-spacing: 0.06em;
+    padding: 0.55rem 1.8rem; border-radius: 3px; cursor: pointer;
+    transition: color 0.3s ease, border-color 0.3s ease, background 0.3s ease, box-shadow 0.4s ease;
+  }
+  .cover-ink:hover, .cover-ink:focus-visible {
+    color: var(--ink); border-color: var(--accent-warm);
+    background: rgba(201,162,94,0.05); outline: none;
+    box-shadow: 0 0 24px -8px rgba(201,162,94,0.3);
+  }
+  .cover-ink.active { color: var(--ink); border-color: var(--accent); }
+  html[data-skin="papyrus"] .cover-ink:hover { background: rgba(138,90,35,0.06); box-shadow: none; }
+
+  .cover-plate {
+    margin: 0 0 2.2rem; max-width: 34rem; width: 100%;
+    border: 1px solid var(--choice-edge); border-radius: 3px;
+    padding: 0.5rem; background: var(--choice-bg);
+    opacity: 0; transform: translateY(14px);
+    animation: coverrise 1.4s ease 0.15s forwards;
+  }
+  @keyframes coverrise { to { opacity: 1; transform: translateY(0); } }
+  .cover-plate img { display: block; width: 100%; height: auto; border-radius: 2px; }
+  .cover-plate img.skin-pap { display: none; }
+  html[data-skin="papyrus"] .cover-plate img.skin-dark { display: none; }
+  html[data-skin="papyrus"] .cover-plate img.skin-pap { display: block; }
+
+  .cover-title {
+    font-family: var(--display); font-weight: 600;
+    font-size: clamp(3.2rem, 12vw, 5.5rem); line-height: 1; letter-spacing: 0.04em;
+    margin: 0.4rem auto 0.3rem; color: var(--ink); text-align: center;
+    opacity: 0; animation: coverrise 1.4s ease 0.3s forwards;
+  }
+  .cover-sub {
+    font-family: var(--display); font-style: italic;
+    font-size: 1.4rem; color: var(--ink-faint); letter-spacing: 0.06em;
+    margin: 0 auto 2.8rem; text-align: center;
+    opacity: 0; animation: coverrise 1.4s ease 0.8s forwards;
+  }
+  .cover-enter {
+    margin: 0 auto; text-align: center;
+    opacity: 0; animation: coverrise 1.4s ease 1.3s forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cover-plate, .cover-title, .cover-sub, .cover-enter { animation: none; opacity: 1; transform: none; }
+  }
+
+  .page { position: relative; z-index: 2; max-width: 38rem; margin: 0 auto; padding: 7rem 1.6rem 5rem; }
+  .page[hidden] { display: none; }
+
+  .overture {
+    font-family: var(--display); font-weight: 600;
+    font-size: clamp(2.1rem, 6vw, 3.1rem); line-height: 1.12; letter-spacing: 0.01em;
+    margin: 0 0 2.6rem; color: var(--ink);
+  }
+  .overture span { display: block; }
+  .overture .b { color: var(--accent); }
+
+  .chapter-mark {
+    font-family: var(--display); font-style: italic; font-size: 1.05rem;
+    color: var(--ink-faint); letter-spacing: 0.08em; text-align: center;
+    margin: 0 0 2.4rem;
+  }
+
+  p { margin: 0 0 1.35rem; }
+
+  /* illuminated initial—first paragraph of each page */
+  .lead-cap::first-letter {
+    font-family: var(--display);
+    font-weight: 600;
+    float: left;
+    font-size: 4.4rem;
+    line-height: 0.78;
+    padding: 0.32rem 0.55rem 0 0;
+    margin-top: 0.1rem;
+    color: var(--accent);
+    text-shadow: 0 0 18px rgba(169,139,196,0.25);
+  }
+  html[data-skin="papyrus"] .lead-cap::first-letter {
+    color: var(--accent);
+    text-shadow: none;
+  }
+  .overture + .lead-cap::first-letter { /* when an overture precedes, keep normal */ }
+
+  .snarl { font-style: italic; color: var(--ink-dim); }
+  .wait {
+    font-family: var(--display); font-style: italic; font-size: 1.5rem;
+    color: var(--accent); margin: 1.8rem 0 1.2rem; letter-spacing: 0.02em;
+  }
+  .interior { font-style: italic; color: var(--ink-dim); }
+
+  /* editing-only nav—deliberately utilitarian so it never reads as story UI */
+  #editNav {
+    position: fixed; left: 12px; bottom: 12px; z-index: 200;
+    display: flex; gap: 6px;
+    font-family: -apple-system, system-ui, sans-serif;
+  }
+  #editNav button {
+    background: rgba(20,16,28,0.92); color: #b9aec0;
+    border: 1px solid #4a4358; border-radius: 4px;
+    font-size: 12px; letter-spacing: .03em; padding: 6px 10px;
+    cursor: pointer; backdrop-filter: blur(3px);
+    transition: color .15s, border-color .15s, background .15s;
+  }
+  #editNav button:hover { color: #fff; border-color: #8a7fa0; background: rgba(30,24,40,0.96); }
+  @media print { #editNav { display: none; } }
+  /* framed mid-scene illustration plates—punctuate the prose, never interrupt it */
+  .plate {
+    margin: 2.8rem auto;
+    max-width: 30rem;
+    border: 1px solid var(--choice-edge);
+    border-radius: 3px;
+    padding: 0.5rem;
+    background: var(--choice-bg);
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 1.1s ease, transform 1.1s ease, box-shadow 0.6s ease;
+  }
+  .plate.seen { opacity: 1; transform: translateY(0); }
+  .plate img {
+    display: block; width: 100%; height: auto; border-radius: 2px;
+    /* duotone-lean: the art already sits in the palette; this seats it deeper into the page's dark */
+    filter: saturate(0.92) contrast(1.02) brightness(0.94);
+    transition: filter 0.6s ease;
+  }
+  /* two native artworks per plate—one per skin. Toggle swaps which shows. */
+  .plate img.skin-pap { display: none; }
+  html[data-skin="papyrus"] .plate img.skin-dark { display: none; }
+  html[data-skin="papyrus"] .plate img.skin-pap { display: block; }
+  html[data-skin="papyrus"] .plate img { filter: saturate(0.98) contrast(1.02) brightness(0.98); }
+  .plate:hover { box-shadow: 0 0 34px -10px rgba(169,139,196,0.3); }
+  .plate:hover img { filter: saturate(1) contrast(1.04) brightness(1); }
+  .plate figcaption {
+    font-family: var(--display); font-style: italic; font-size: 0.9rem;
+    color: var(--ink-faint); text-align: center; letter-spacing: 0.04em;
+    margin-top: 0.5rem;
+  }
+  /* fallback while no image is wired: a quiet placeholder frame, not a broken-image icon */
+  .plate.await {
+    min-height: 12rem; display: flex; align-items: center; justify-content: center;
+    color: var(--ink-faint); font-style: italic; font-size: 0.85rem; letter-spacing: 0.08em;
+  }
+  .plate.await img { display: none; }
+  .plate.await figcaption { display: none; }
+  .plate.await::before { content: "⟢ plate to be seated"; }
+  @media (prefers-reduced-motion: reduce) {
+    .plate { opacity: 1; transform: none; }
+  }
+  /* Corona's intrusions: memories the wraith shines back into you.
+     Not your voice—its light. Hot amber, italic, other. */
+  .corona {
+    font-style: italic;
+    color: #d98a3d;
+    text-shadow: 0 0 14px rgba(217,138,61,0.28);
+  }
+  html[data-skin="papyrus"] .corona {
+    color: #9a4a12;
+    text-shadow: none;
+  }
+  em { font-style: italic; }
+
+  .turn { margin: 3.2rem 0 1.4rem; text-align: center; color: var(--ink-faint); font-style: italic; font-size: 1.02rem; }
+
+  .choices { margin-top: 1.2rem; display: flex; flex-direction: column; gap: 0.9rem; }
+  .choice {
+    position: relative; display: flex; align-items: flex-start; gap: 1rem;
+    width: 100%; text-align: left;
+    background: var(--choice-bg); border: 1px solid var(--choice-edge); border-radius: 3px;
+    color: var(--ink); font-family: var(--body); font-size: 1.12rem; line-height: 1.5;
+    padding: 1.15rem 1.3rem; cursor: pointer;
+    transition: border-color 0.4s ease, background 0.4s ease, transform 0.3s ease, box-shadow 0.5s ease;
+    opacity: 0; transform: translateY(14px); animation: bloom 0.9s ease forwards;
+  }
+  .choice:nth-child(1) { animation-delay: 0.15s; }
+  .choice:nth-child(2) { animation-delay: 0.5s; }
+  .choice:nth-child(3) { animation-delay: 0.85s; }
+  @keyframes bloom { to { opacity: 1; transform: translateY(0); } }
+
+  .choice:hover, .choice:focus-visible {
+    border-color: var(--accent-warm); background: rgba(201,162,94,0.06);
+    transform: translateY(-2px); outline: none; box-shadow: 0 0 28px -6px rgba(201,162,94,0.28);
+  }
+  html[data-skin="papyrus"] .choice:hover, html[data-skin="papyrus"] .choice:focus-visible {
+    background: rgba(138,90,35,0.07); box-shadow: none; transform: translateY(-1px);
+  }
+  .sigil { flex: 0 0 auto; width: 1.6rem; height: 1.6rem; margin-top: 0.1rem; color: var(--accent); transition: color 0.4s ease, transform 0.5s ease; }
+  .choice:hover .sigil, .choice:focus-visible .sigil { color: var(--accent-warm); transform: rotate(8deg); }
+  .choice .feeling { display: block; }
+  .choice .feeling b { font-weight: 500; font-style: italic; color: var(--accent); transition: color 0.4s ease; }
+  .choice:hover .feeling b, .choice:focus-visible .feeling b { color: var(--accent-warm); }
+
+  /* the single forward button at the foot of each branch */
+  .onward-wrap { margin-top: 3.4rem; display: flex; justify-content: center; }
+  .onward {
+    display: inline-flex; flex-direction: column; align-items: center; gap: 0.15rem;
+    background: transparent; border: 1px solid var(--choice-edge); border-radius: 3px;
+    color: var(--ink); font-family: var(--display); cursor: pointer;
+    padding: 1.05rem 2.4rem; min-width: 18rem;
+    transition: border-color 0.4s ease, background 0.4s ease, transform 0.3s ease, box-shadow 0.5s ease;
+  }
+  .onward .o-feeling { font-style: italic; font-size: 0.95rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); transition: color 0.4s ease; }
+  .onward .o-title { font-size: 1.5rem; font-weight: 600; letter-spacing: 0.01em; }
+  .onward:hover, .onward:focus-visible {
+    border-color: var(--accent-warm); background: rgba(201,162,94,0.05);
+    transform: translateY(-2px); outline: none; box-shadow: 0 0 30px -8px rgba(201,162,94,0.3);
+  }
+  .onward:hover .o-feeling, .onward:focus-visible .o-feeling { color: var(--accent-warm); }
+  html[data-skin="papyrus"] .onward:hover, html[data-skin="papyrus"] .onward:focus-visible { background: rgba(138,90,35,0.06); box-shadow: none; }
+
+  .restart-wrap { margin-top: 2.2rem; text-align: center; }
+
+  /* the eight-history spill—a spray of doors */
+  .doors { margin-top: 1.6rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  @media (max-width: 480px) { .doors { grid-template-columns: 1fr; } }
+  .door {
+    text-align: left; background: var(--choice-bg);
+    border: 1px solid var(--choice-edge); border-radius: 3px;
+    color: var(--ink); font-family: var(--body); cursor: pointer;
+    padding: 0.95rem 1.1rem; line-height: 1.4;
+    transition: border-color 0.4s ease, background 0.4s ease, transform 0.3s ease, box-shadow 0.5s ease;
+  }
+  .door .d-kicker { display: block; font-style: italic; font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 0.2rem; }
+  .door .d-title { display: block; font-family: var(--display); font-size: 1.25rem; font-weight: 600; }
+  .door:hover, .door:focus-visible {
+    border-color: var(--accent-warm); background: rgba(201,162,94,0.06);
+    transform: translateY(-2px); outline: none; box-shadow: 0 0 24px -8px rgba(201,162,94,0.28);
+  }
+  html[data-skin="papyrus"] .door:hover, html[data-skin="papyrus"] .door:focus-visible { background: rgba(138,90,35,0.07); box-shadow: none; }
+
+  /* the gone button at the foot of each history—it guts out */
+  .gone-wrap { margin-top: 2.8rem; display: flex; justify-content: center; }
+  .gone {
+    background: transparent; border: none; cursor: pointer;
+    font-family: var(--display); font-style: italic; font-size: 1.6rem;
+    letter-spacing: 0.12em; color: var(--ink-faint);
+    padding: 0.6rem 2rem;
+    transition: color 0.5s ease, letter-spacing 0.6s ease, opacity 0.5s ease;
+  }
+  .gone:hover, .gone:focus-visible { color: var(--accent); letter-spacing: 0.34em; outline: none; }
+
+  .placeholder { color: var(--ink-faint); font-style: italic; }
+  .placeholder::before { content: "⟢ "; }
+
+  /* ---- the reading-down dig ---- */
+  .layer { min-height: 8.5rem; margin: 2rem 0; border-left: 2px solid var(--choice-edge); padding: 0.4rem 0 0.4rem 1.4rem; position: relative; }
+  .layer-text { font-family: var(--display); font-size: 1.5rem; line-height: 1.4; font-style: italic; color: var(--ink); opacity: 0; transform: translateY(10px); animation: surface 1.1s ease forwards; }
+  .layer-text.sinking { animation: sink 0.8s ease forwards; }
+  @keyframes surface { from { opacity: 0; transform: translateY(12px); filter: blur(3px);} to { opacity: 1; transform: translateY(0); filter: blur(0);} }
+  @keyframes sink { from { opacity: 1; transform: translateY(0); filter: blur(0);} to { opacity: 0; transform: translateY(-10px); filter: blur(4px);} }
+  .depth-note { font-size: 0.85rem; color: var(--ink-faint); font-style: italic; letter-spacing: 0.06em; margin-top: 0.6rem; }
+
+  .methods { margin-top: 2.4rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  @media (max-width: 480px) { .methods { grid-template-columns: 1fr; } }
+  .method { text-align: left; background: var(--choice-bg); border: 1px solid var(--choice-edge); border-radius: 3px; color: var(--ink); font-family: var(--body); cursor: pointer; padding: 0.9rem 1.1rem; line-height: 1.4; transition: border-color 0.35s ease, background 0.35s ease, transform 0.25s ease, box-shadow 0.45s ease; }
+  .method .m-verb { display: block; font-family: var(--display); font-size: 1.3rem; font-weight: 600; }
+  .method .m-note { display: block; font-size: 0.78rem; font-style: italic; color: var(--ink-faint); margin-top: 0.15rem; }
+  .method:hover, .method:focus-visible { border-color: var(--accent-warm); background: rgba(201,162,94,0.06); transform: translateY(-2px); outline: none; box-shadow: 0 0 22px -8px rgba(201,162,94,0.28); }
+  html[data-skin="papyrus"] .method:hover { background: rgba(138,90,35,0.07); box-shadow: none; }
+
+  .veridvasc-line { font-family: var(--display); font-size: 1.7rem; font-style: italic; color: var(--accent-warm); text-shadow: 0 0 22px rgba(201,162,94,0.3); margin: 2.4rem 0 1.8rem; text-align: center; animation: surface 1.4s ease forwards; }
+
+  /* ---- the three histories: THWOMP in, eat bottom-up ---- */
+  .glimpse-title { font-family:var(--display); font-size:1.9rem; font-weight:600; color:var(--accent); margin:.4rem 0 1.4rem; opacity:0; }
+  .glimpse-title.printed { opacity:1; transition:opacity .6s ease; }
+  .glimpse-title.pulse { color:var(--accent-warm); text-shadow:0 0 22px rgba(201,162,94,.45), 0 0 8px rgba(201,162,94,.30); transition:color .32s ease, text-shadow .32s ease; }
+  .glimpse-title.eaten { opacity:0; filter:blur(7px); transform:translateY(-8px); transition:opacity .5s ease, filter .5s ease, transform .5s ease; }
+
+  .hline { margin:0 0 1.05rem; opacity:0; transform:scale(1.04); filter:blur(3px); transition:opacity .5s ease, filter .5s ease, transform .5s ease; will-change:opacity,filter,transform; }
+  .hline.printed { opacity:1; filter:blur(0); transform:scale(1); animation:thwomp .42s cubic-bezier(.2,.9,.25,1) both; }
+  @keyframes thwomp { 0%{opacity:0; transform:scale(1.06); filter:blur(4px);} 55%{opacity:1; transform:scale(.995); filter:blur(0);} 100%{opacity:1; transform:scale(1); filter:blur(0);} }
+  .hline.pulse { color:var(--accent-warm); text-shadow:0 0 22px rgba(201,162,94,.45), 0 0 8px rgba(201,162,94,.30); transition:color .32s ease, text-shadow .32s ease; }
+  /* eaten must win over the held thwomp animation—kill the animation so the fade can run */
+  .hline.eaten { animation:none !important; opacity:0; filter:blur(7px); transform:translateY(-8px) scaleX(.985); pointer-events:none; transition:opacity .55s ease, filter .55s ease, transform .55s ease; }
+  .hline em { font-style:italic; }
+  @media (prefers-reduced-motion: reduce){
+    .hline, .glimpse-title { transition:opacity .3s ease; transform:none; animation:none; }
+    .hline.printed { animation:none; }
+    .hline.eaten, .glimpse-title.eaten { filter:none; transform:none; }
+  }
+
+  #flicker { position:fixed; inset:0; z-index:40; display:none; overflow:hidden; background:var(--bg); }
+  #flicker.on { display:block; }
+  #flicker .shard { position:absolute; font-family:var(--display); font-style:italic; line-height:1.25; text-align:center; color:var(--ink); opacity:0; pointer-events:none; max-width:24rem; padding:0 1rem; will-change:opacity,transform,filter; }
+  #flicker .shard.show { animation:shardflash var(--flashdur,600ms) ease forwards; }
+  @keyframes shardflash {
+    0%{opacity:0; filter:blur(7px); transform:translateY(10px) scale(.96);}
+    22%{opacity:var(--peak,.95); filter:blur(0); transform:translateY(0) scale(1);}
+    70%{opacity:var(--peak,.95);}
+    100%{opacity:0; filter:blur(6px); transform:translateY(-10px) scale(1.02);}
+  }
+  #writing { position:fixed; inset:0; z-index:41; display:none; align-items:center; justify-content:center; background:var(--bg-deep); }
+  #writing.on { display:flex; }
+  .writing-inner { max-width:34rem; padding:2rem; text-align:center; }
+  .writing-inner .w-lead { font-family:var(--display); font-size:clamp(2.2rem,7vw,3rem); font-weight:600; color:var(--accent-warm); text-shadow:0 0 40px rgba(201,162,94,.55), 0 0 14px rgba(201,162,94,.4); margin-bottom:1.4rem; opacity:0; animation:writingrise 2.6s ease forwards; }
+  @keyframes writingrise { 0%{opacity:0; filter:blur(10px); transform:translateY(14px) scale(.97);} 45%{opacity:1; filter:blur(0); transform:translateY(0) scale(1);} 100%{opacity:1; filter:blur(0); transform:translateY(0) scale(1);} }
+  .writing-inner p { color:var(--ink-dim); opacity:0; animation:writingrise 2s ease 1s forwards; }
+  .restart {
+    background: none; border: none; cursor: pointer;
+    font-family: var(--body); font-style: italic; font-size: 0.92rem;
+    letter-spacing: 0.08em; color: var(--ink-faint);
+    padding: 0.4rem 0.6rem;
+    border-bottom: 1px solid transparent;
+    transition: color 0.3s ease, border-color 0.3s ease;
+  }
+  .restart:hover, .restart:focus-visible { color: var(--accent); border-bottom-color: var(--accent); outline: none; }
+
+  /* ============================================================
+     THE DOOR THAT UN-WRITES ITSELF
+     The wretches eat 'door' out of the sentence, retroactively,
+     and 'wall' surfaces where it had been. The page performs
+     the revision Cherie describes. Fires once on scroll-in.
+     ============================================================ */
+  .revise-door { position: relative; display: inline-block; white-space: nowrap; }
+  .rd-word, .rd-wall {
+    display: inline-block;
+  }
+  .rd-word span {
+    display: inline-block;
+    transition: opacity 0.5s ease, filter 0.5s ease, transform 0.5s ease;
+  }
+  /* each letter of 'door' gets eaten, last-first, wet and blurring */
+  .revise-door.eating .rd-word span {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateY(2px) scaleX(0.4);
+  }
+  .revise-door.eating .rd-word span:nth-child(4) { transition-delay: 0.05s; }
+  .revise-door.eating .rd-word span:nth-child(3) { transition-delay: 0.55s; }
+  .revise-door.eating .rd-word span:nth-child(2) { transition-delay: 1.05s; }
+  .revise-door.eating .rd-word span:nth-child(1) { transition-delay: 1.55s; }
+  /* 'wall' sits under the same slot, hidden, then surfaces through the gap */
+  .rd-wall {
+    position: absolute; left: 0; top: 0;
+    opacity: 0; filter: blur(5px);
+    color: var(--ink);
+    transition: opacity 1.1s ease, filter 1.1s ease;
+    pointer-events: none;
+  }
+  .revise-door.eating .rd-wall { transition-delay: 2.0s; opacity: 1; filter: blur(0); }
+  /* once fully settled: the eaten door takes no space, wall holds the slot in-flow,
+     so the terminal period sits flush against 'wall' */
+  #revise-line.settled .rd-word { display: none; }
+  #revise-line.settled .rd-wall { position: static; }
+  /* the dash trails, then thins away once the revision sets */
+  .rd-dash { transition: opacity 0.8s ease; transition-delay: 2.4s; }
+  .revise-door.eating ~ .rd-dash,
+  #revise-line.revised .rd-dash { opacity: 0; }
+  /* a terminal period surfaces once the sentence is finished (revised) */
+  .rd-period { opacity: 0; transition: opacity 0.8s ease; transition-delay: 2.4s; }
+  #revise-line.revised .rd-period { opacity: 1; }
+  /* 'From the wall.'—held hidden, surfaces only after the eat completes */
+  .rd-from {
+    opacity: 0; filter: blur(4px);
+    transition: opacity 1.2s ease, filter 1.2s ease;
+  }
+  .rd-from.surface { opacity: 1; filter: blur(0); }
+
+  /* the line shakes three times to summon the eye, THEN edits */
+  @keyframes rd-summon {
+    0%   { transform: translateX(0); }
+    8%   { transform: translateX(-3px); }
+    16%  { transform: translateX(3px); }
+    24%  { transform: translateX(-3px); }
+    32%  { transform: translateX(2px); }
+    40%  { transform: translateX(-2px); }
+    48%  { transform: translateX(2px); }
+    56%  { transform: translateX(-1px); }
+    64%  { transform: translateX(1px); }
+    72%, 100% { transform: translateX(0); }
+  }
+  #revise-line.summon { animation: rd-summon 0.9s ease-in-out; }
+
+  /* after the edit sets, a faint lingering haunt where the door was erased */
+  @keyframes rd-haunt {
+    0%, 92%, 100% { transform: translateX(0); }
+    94% { transform: translateX(-1.5px); }
+    96% { transform: translateX(1px); }
+    98% { transform: translateX(-0.5px); }
+  }
+  #revise-line.revised { animation: rd-haunt 9s ease-in-out infinite; animation-delay: 2s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    /* no eating; the revision is simply already true */
+    .rd-word { display: none; }
+    .rd-wall { position: static; opacity: 1; filter: none; }
+    .rd-dash { display: none; }
+    .rd-period { opacity: 1; }
+    .rd-from { opacity: 1; filter: none; }
+    #revise-line.revised { animation: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) { .choice { animation: none; opacity: 1; transform: none; } }
+  @media (max-width: 480px) {
+    .page { padding: 5.5rem 1.2rem 4rem; }
+    body { font-size: 1.1rem; }
+    .onward { min-width: 0; width: 100%; }
+  }
+
+    /* ---- page transition: revision, not turning ---- */
+    @keyframes unwrite {
+      to { opacity: 0; filter: blur(2.5px); transform: translateY(-5px); }
+    }
+    @keyframes inkset {
+      from { opacity: 0; filter: blur(3px); transform: translateY(7px); }
+      70%  { filter: blur(.4px); }
+      to   { opacity: 1; filter: none; transform: none; }
+    }
+    main[data-page].unwriting { animation: unwrite .34s ease-in forwards; }
+    main[data-page].setting   { animation: inkset .46s ease-out both; }
+    @media (prefers-reduced-motion: reduce) {
+      main[data-page].unwriting, main[data-page].setting { animation: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="veil"></div>
+  <button class="skin-toggle" id="skinBtn" aria-label="Switch reading skin"><span id="skinLabel">Papyrus</span></button>
+
+  <!-- ============ COVER—the threshold ============ -->
+  <main class="page cover" id="p-cover" data-page>
+    <div class="cover-skin">
+      <span class="cover-skin-label">choose your hue</span>
+      <div class="cover-skin-btns">
+        <button class="cover-ink" id="coverInk" onclick="setSkin('dark')">Ink</button>
+        <button class="cover-ink" id="coverPap" onclick="setSkin('papyrus')">Papyrus</button>
+      </div>
+    </div>
+
+    <figure class="cover-plate" aria-label="Prague at night: the Astronomical Clock and the spires.">
+      <img class="skin-dark" alt="Prague at night in violet ink: the Orloj, the bridges, the spires, a sky with too few lights." src="https://raw.githubusercontent.com/Irrational-Worlds/the-prague-event/main/prague-ink.png">
+      <img class="skin-pap" alt="Prague at night in warm amber: the Orloj, the bridges, the spires." src="https://raw.githubusercontent.com/Irrational-Worlds/the-prague-event/main/prague-amber.png">
+    </figure>
+
+    <p class="cover-sub">Five years ago.</p>
+
+    <div class="cover-enter">
+      <button class="onward" onclick="go('p-open')">
+        <span class="o-title">We were the best</span>
+      </button>
+    </div>
+  </main>
+
+
+  <!-- ============ PAGE 1—THE APPROACH ============ -->
+  <main class="page" id="p-open" data-page hidden>
+    <h1 class="overture">
+      <span>We were the best.</span>
+      <span class="b">We were the best that ever lived.</span>
+    </h1>
+    <p>&ldquo;Go!&rdquo;</p>
+    <p>J held open that treacherous door, that strangling, sideways door. Behind you, the wretches lurched and screaled, shlorping after you with a vengeance.</p>
+    <figure class="plate" aria-label="A hand braced against a warded door; tentacled, many-toothed wretches reach through the gap.">
+      <img class="skin-dark" alt="A hand braced flat against a sideways door as clawed, tentacled wretches reach through the gap beside it, rendered in deep blue-violet." loading="lazy" src="https://raw.githubusercontent.com/Irrational-Worlds/the-prague-event/main/evening-ink.png">
+      <img class="skin-pap" alt="A hand braced against the door as clawed wretches reach through the gap, rendered in warm sepia." loading="lazy" src="https://raw.githubusercontent.com/Irrational-Worlds/the-prague-event/main/evening-amber.png">
+      <figcaption>Prague. The door that would not stay a door.</figcaption>
+    </figure>
+    <p>The air soured and chilled around them. The very idea of space, of what it might be, fractured and went brittle in your mind.</p>
+    <p>&ldquo;But what about&mdash;?&rdquo; Cherie half stumbled as she reached the door. &ldquo;He&rsquo;s right there&mdash;&rdquo;</p>
+    <p>She whipped a look back, wide-eyed, searching for the clever, cunning man who&rsquo;d just fled along behind her. She halted, eyes skittering, hunting for him.</p>
+    <p>Or his corpse.</p>
+    <p>&ldquo;Gone,&rdquo; she breathed. Her gaze snagged where the tentacled wretches still devoured, tearing at some crimson wetness. Bone glint through that shine.</p>
+    <p>They&rsquo;d eaten him, devoured his body, his name, the thought of him. They ate him out of memory, out of history.</p>
+    <p>You stared. Recollection frayed in real time, the shape of him sloughing away like meat off a bone.</p>
+    <p>&ldquo;Through. The. Door!&rdquo; J snarled.</p>
+    <p>He put his hand against the back of Cherie&rsquo;s bone-edged cloak and practically hurled her through. You darted after, head low, eyes squeezed shut. The Brute thundered after you.</p>
+    <p>J slammed the door and braced himself against it.</p>
+    <p>Wet chewing wormed through the wood and into your skull.</p>
+    <p>Then, with a loud crack, something hit from the other side.</p>
+    <p>&ldquo;Cherie!&rdquo; Panic threaded his voice. &ldquo;Honey, we need to end this. Right now.&rdquo;</p>
+    <p>&ldquo;You need&hellip;&rdquo; She still reeled. She wasn&rsquo;t processing the death of&mdash;</p>
+    <p class="wait">Wait.</p>
+    <p>Your thoughts snarled around some missing shape.</p>
+    <p class="interior">Did someone die?</p>
+    <p>Yes. Just a moment ago. You reached for a name, a face, and found only a hole where both should have been. You were still reaching when Cherie&rsquo;s voice cuts past you, aimed elsewhere&mdash;</p>
+    <p>&ldquo;J. Think.&rdquo; She shoved harder against the door. &ldquo;Write us out of this.&rdquo;</p>
+    <p>&ldquo;Um. Um. Um&hellip;&rdquo; He screwed his eyes shut.</p>
+    <p>&ldquo;Come on?&rdquo;</p>
+    <p>&ldquo;Maybe they&hellip; turn on each other.&rdquo; J yanked a small bottle from his belt and dipped his fingertips in black ink.</p>
+    <p>&ldquo;Trite.&rdquo; The word came sharp as a blade. &ldquo;Too easy. You hate easy coincidence.&rdquo;</p>
+    <p>&ldquo;Then they lose interest?&rdquo; He shut his eyes, lips moving, one ink-stained finger scoring a line in the air.</p>
+    <p>&ldquo;No.&rdquo; She glanced at him as the door shuddered again. &ldquo;You&rsquo;re better than that.&rdquo;</p>
+    <p>&ldquo;Just give me a second!&rdquo;</p>
+    <p>&ldquo;I don&rsquo;t think we have one,&rdquo; she replied. Still&hellip;</p>
+    <p>She stilled.</p>
+    <p>A long moment dripped by.</p>
+    <p>&ldquo;They&rsquo;re eating it.&rdquo; He stared hard at the shivering planks. &ldquo;They&rsquo;re eating it right now.&rdquo;</p>
+    <p>&ldquo;Go on,&rdquo; Cherie said, and pressed two fingers against the shaking wood as though feeling for the sentence inside it. Her eyes narrowed. &ldquo;They&rsquo;re not chewing boards, J. They&rsquo;re chewing tense. They&rsquo;re chewing the very concept of <em>was</em>.&rdquo;</p>
+    <p>&ldquo;They eat things out of existence, right? Not the wood. The <em>idea</em> of it. Right now they&rsquo;re eating the door&mdash;&rdquo;</p>
+    <p>&ldquo;We don&rsquo;t want the door to vanish,&rdquo; you said.</p>
+    <p>&ldquo;It doesn&rsquo;t vanish. That&rsquo;s not the shape of it.&rdquo; He almost laughed. &ldquo;When they&rsquo;re done there won&rsquo;t <em>have been</em> a door. They ate it!&rdquo;</p>
+    <p>&ldquo;Yes,&rdquo; Cherie mused. &ldquo;It won&rsquo;t vanish, but revise backward. A wall where a door tried to happen.&rdquo;</p>
+    <p>&ldquo;That&hellip;&rdquo; you blink. &ldquo;That&rsquo;s exactly what they do.&rdquo;</p>
+    <p>&ldquo;It is.&rdquo; J smirked. He met Cherie&rsquo;s eye.</p>
+    <p>She pinched the sentence in the air and twisted it.</p>
+    <p>His grin cut wider.</p>
+    <p>Both of them hurled themselves away from the door.</p>
+    <p>The seams bled away and the sounds on the other side fell ominously silent.</p>
+    <p>For a moment, the four of you <em>(Five. There should have been five.)</em> stared at the wall.</p>
+    <p>&ldquo;I hope that wasn&rsquo;t our way out,&rdquo; you said.</p>
+    <p>&ldquo;There&rsquo;s a way out?&rdquo; J asked. He grinned anyway, but it came thin and fever-bright, trembling at the edges. Ink blackened his fingertips. One corner of his mouth gleamed where he&rsquo;d bitten through it. He dragged in a ragged breath. &ldquo;Then we&rsquo;d better steal it.&rdquo;</p>
+    <p>&ldquo;There won&rsquo;t be any way out for&hellip;&rdquo; The Brute stopped. His brow knotted. &ldquo;For&hellip;&rdquo;</p>
+    <p>You reached too, scrabbling after the same absent thing. Someone should have been there. Someone <em>had</em> been there.</p>
+    <p>&ldquo;I have him.&rdquo; J scanned each face, ink still dark on his fingertips. &ldquo;I wrote down his name. I&rsquo;ll carry the memory till we&rsquo;re clear. Then I&rsquo;ll give him back to you.&rdquo;</p>
+    <p>&ldquo;We need to move,&rdquo; Cherie said, eyeing J. &ldquo;We&mdash; I&hellip; only have a few more endings left. The sooner we&rsquo;re gone, the better.&rdquo;</p>
+    <p>&ldquo;Then let&rsquo;s not keep the dark waiting.&rdquo; J bared a grin that looked too bright in that dying place.</p>
+    <p>You followed him into the next hallway, dramatic as ever.</p>
+    <p>But the world had already turned uncanny. The walls leaned too close. The lights trembled in their sockets. Somewhere behind you, something worried at the place where the door had never been, with sharpened teeth and sharper appetite.</p>
+    <p>And even as you ran, you felt it flowering in your chest: not hope, not yet, but the first bright sickness of wonder.</p>
+    <p class="turn">What sickness of wonder?</p>
+    <div class="choices">
+      <button class="choice" onclick="go('p-triumphant')">
+        <svg class="sigil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M12 2l2.4 6.5L21 9l-5 4.3L17.5 21 12 17l-5.5 4L8 13.3 3 9l6.6-.5z"/></svg>
+        <span class="feeling">I am <b>triumphant</b>. We are the best that ever lived.</span>
+      </button>
+      <button class="choice" onclick="go('p-exhilarated')">
+        <svg class="sigil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M5 19c4-1 6-4 7-8 1 4 3 7 7 8M12 3v8"/><circle cx="12" cy="13" r="1.6"/></svg>
+        <span class="feeling">I am <b>exhilarated</b>. I never thought it would feel like this.</span>
+      </button>
+      <button class="choice" onclick="go('p-terrified')">
+        <svg class="sigil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M12 2C9 6 6 8 6 13a6 6 0 0012 0c0-5-3-7-6-11z"/><path d="M12 22v-3"/></svg>
+        <span class="feeling">I am <b>terrified</b>. Will I be the next one devoured?</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- ============ TRIUMPHANT ============ -->
+  <main class="page" id="p-triumphant" data-page hidden>
+    <p class="chapter-mark">Prague—five years ago</p>
+    <p class="lead-cap">Triumph.</p>
+    <p>The next two hours practically sparkled by, an incandescence of the weird. The Upways Hall. The Skyway. The MirrorDim.</p>
+    <p>The Order of the Second Dawn had raised its unearthly construction with every manner of ward, sigil, and unseen spell. At every turn, they bent their power toward the terrible radiance of their God, the False Sun. The entire temple structure loomed sideways, somehow askant to direction, to time itself.</p>
+    <p>The longer you looked at any given thing, the more out of place it felt, as if normalcy, mundanity itself, could not survive in that place.</p>
+    <p>Yet the four of you made your way past the third bridge, the one that hung menacingly in the air. You collectively disenchanted the Twilight Gate, ignoring the way it attempted to seduce your mind into senselessness.</p>
+    <p>When a thing would not end, J rewrote it and Cherie edited until it would. When a thing wanted to be feral, the Brute handled matters.</p>
+    <p>When a thing could not be understood&hellip;</p>
+    <p>You handled it.</p>
+    <p>Eventually, however, you came to the end of a long hall filled with braziers. The last one gleamed oddly, shining with hatred.</p>
+    <p>Impossibly, a hound burst from the malevolent bowl of coals, all fire and teeth and noon. It lunged forward, teeth like cinders.</p>
+    <p>&ldquo;Is that&hellip;&rdquo; Cherie looked at J. &ldquo;A&hellip; Sun-Dog?&rdquo;</p>
+    <p>&ldquo;Don&rsquo;t look at me,&rdquo; he quipped. &ldquo;I don&rsquo;t do puns.&rdquo;</p>
+    <p>It stepped forward, eyes smoldering. The stone beneath its feet softened from the heat.</p>
+    <p>&ldquo;Yeah.&rdquo; J stepped back from the sagging floor. &ldquo;Not it.&rdquo;</p>
+    <p>&ldquo;Not it!&rdquo; Cherie&rsquo;s hand brushed her nose as she pushed hair rising in the heat behind her ear.</p>
+    <p>&ldquo;Fine.&rdquo; The Brute sighed. He drew his weapons.</p>
+    <p>He met it head-on.</p>
+    <p>The thing burned, smoldered like a sickening star. It struck with a scream like metal in a furnace, its jaws opening around a core of white-gold ruin.</p>
+    <p>The Brute took the first bite on his forearm and did not so much as grunt. Flesh hissed.</p>
+    <p>The room filled with the smell of scorched hair and cooked blood.</p>
+    <p>He drove forward anyway, shoulder first, smashing the creature back across the flagstones.</p>
+    <p>The Sun-Dog&rsquo;s nails squealed as it slid back an inch over the softening floor.</p>
+    <p>The Brute&rsquo;s blade-strike skittered off its molten hide, and the next, and the next.</p>
+    <p>&ldquo;Damn!&rdquo; He swung wide, force finding nothing to argue with. &ldquo;I can&rsquo;t&mdash;&rdquo;</p>
+    <p>You, however, stood still.</p>
+    <p>Already you sank into that white-space, that margin place. The moment before the word.</p>
+    <p>Already, you Read.</p>
+    <p>You didn&rsquo;t Read &ldquo;the fire&rdquo;. That&rsquo;s not precisely your gift. Your eyes skimmed the sentence underneath the fire.</p>
+    <p>The way you Read everything, the way you&rsquo;d Read the whole temple, the way you&rsquo;d Read the lot of you into being a crew in the first place. And there, buried under noon and fire and the idea of a god&hellip;</p>
+    <p>You found the word that wasn&rsquo;t true.</p>
+    <p><em>Noon.</em> Noon wasn&rsquo;t a sun. It had never been a sun. Not even a False Sun that the Order of the Second Dawn could worship. It was a time.</p>
+    <p><em>This</em> was a hound that believed it was a false sun, and belief was the only thing holding the damned thing together.</p>
+    <p>&ldquo;Cherie!&rdquo; You called past the frantic melee. &ldquo;The fake word&rsquo;s <em>Noon</em>. Cut it!&rdquo;</p>
+    <p>&ldquo;I see it.&rdquo; Her grin turned sharp.</p>
+    <p>Cherie didn&rsquo;t fight the thing. She edited it. Found the astral sentence where <em>Noon</em> lived and strangled it.</p>
+    <p>The dog&rsquo;s light guttered, just for a second, just long enough.</p>
+    <p>&ldquo;J, the floor!&rdquo; you call. &ldquo;It&rsquo;s going to&mdash;&rdquo;</p>
+    <p>J moved before you finished. He didn&rsquo;t rewrite the hound; he rewrote the floor.</p>
+    <p>The flagstones under it forgot they had ever been stone, and the Sun-Dog took one more step into a sentence that no longer held weight.</p>
+    <p>It fell three inches, then further. Guttering, it stumbled onto its back.</p>
+    <p>&ldquo;Now!&rdquo; you called to the Brute. &ldquo;While it&rsquo;s down!&rdquo;</p>
+    <p>He leapt and caught it by the throat, fingers sinking into radiance as though throttling a star.</p>
+    <p>&ldquo;Now what, puppy?&rdquo; He cackled at the wretch. &ldquo;Huh? Now what?&rdquo;</p>
+    <p>He didn&rsquo;t await an answer. He beat its skull against the brazier until fire broke loose in sheets.</p>
+    <p>It burst, breaking into ash and cinder.</p>
+    <p>A hush settled, a thick blanket of quiet broken only by the Brute&rsquo;s heavy panting.</p>
+    <p>&ldquo;Just great work.&rdquo; J shot you a sideward glance. &ldquo;You&rsquo;re everything I hoped for. The perfect Reader.&rdquo;</p>
+    <p>&ldquo;You&rsquo;re the best that ever was,&rdquo; Cherie added.</p>
+    <p>You couldn&rsquo;t stop grinning.</p>
+    <p>Between the lot of you, words changed. Meaning shifted. Nothing meant everything and everything meant&hellip;</p>
+    <p>Well. Something else.</p>
+    <p>It was hard not to feel giddy. After all, you had always loved it when a plan came together.</p>
+    <p>You stood immortal.</p>
+    <p>In those moments, you thought that you might never die.</p>
+    <div class="onward-wrap">
+      <button class="onward" onclick="go('p-fall')">
+        <span class="o-feeling">Triumphant</span>
+        <span class="o-title">The Best that ever lived</span>
+      </button>
+    </div>
+      <div class="restart-wrap"><button class="restart" onclick="go('p-cover')">Begin again</button></div>
+  </main>
+
+  <!-- ============ EXHILARATED ============ -->
+  <main class="page" id="p-exhilarated" data-page hidden>
+    <p class="chapter-mark">Prague—five years ago</p>
+    <p class="lead-cap">Exhilaration.</p>
+    <p>The next two hours whirled by, vanished in a labyrinthine rush of impossible things.</p>
+    <p>&ldquo;At least the Order of the Second Dawn had taste,&rdquo; J marveled, studying a wall of script.</p>
+    <p>&ldquo;They did,&rdquo; Cherie responded. &ldquo;As though they expected thieves to come appreciate it.&rdquo;</p>
+    <p>The entire temple bent around the Second Dawn, the False Sun, and the horrors that it birthed. The Temple itself shone mirror-bright, bedecked with glamour, illusion and shine. More than once, laughter bubbled up. Fascination loomed everywhere.</p>
+    <p>At one turn, you found prisms that refracted dreams instead of light. At another, you passed a room where every candle burned with memories instead of flame.</p>
+    <p>&ldquo;Just what I needed.&rdquo; J dug through his satchel, pulling forth his cedarwood incense. Carefully, he searched the burning memories for the perfect one before lighting it.</p>
+    <p>&ldquo;He needs all the modifiers he can get,&rdquo; Cherie teased.</p>
+    <p>You laughed again. You couldn&rsquo;t help it.</p>
+    <p>The whole place felt less like a fortress and more like a strange wonderland.</p>
+    <p>But when you came upon the Hall of Flectants, what waited there&hellip;</p>
+    <p>Horror. Incomprehensible.</p>
+    <p>The wraith wore a robe of living fire. Its flesh ran ink-dark, covered in thorned context and error.</p>
+    <p>&ldquo;It&rsquo;s a&hellip; Corona,&rdquo; J muttered. &ldquo;It&rsquo;s a servitor of the False Sun. One of the Logoi&hellip;&rdquo;</p>
+    <p>Its terrible, sharp light fell upon you. Into you. It smoldered its way into your eyes. Every terrible thing you had ever done shone back at you.</p>
+    <p><span class="corona">They left.</span> The thought felt like an anvil in your liver. <span class="corona">They walked out, as if&mdash;</span></p>
+    <p>No. You shook your head, as if you could cast it off. But&hellip;</p>
+    <p class="corona">The cruel faces of your classmates, laughing at the symposium.</p>
+    <p class="corona">Jen, the day she ended your chances.</p>
+    <p class="corona">The night Jordan died. Their hand slipped, falling&hellip;</p>
+    <p>The thoughts wound wildly through you, sorrow tracing across your skin. Every failure felt like lead in the bones. Yet somewhere, impossibly far away&hellip;</p>
+    <p>&ldquo;NO!&rdquo; The Brute charged, roaring. He held that curved knife in one hand and his sawed-off in the other.</p>
+    <p><em>That thing doesn&rsquo;t care about weapons,</em> you thought.</p>
+    <p>The Brute disagreed.</p>
+    <p>The Corona burned like a crown. Like a halo. Like judgment itself. Its light smoldered, reached for him.</p>
+    <p>His hair began to burn away and&hellip;</p>
+    <p>It hurt to look at the Corona. It hurt more to look away.</p>
+    <figure class="plate" aria-label="The Corona, a figure of burning memory.">
+      <img class="skin-dark" alt="The Corona: a cloaked figure with a small blinding sun where its head should be, standing in a temple hall in its own eclipse, rendered in violet dark." loading="lazy" src="https://raw.githubusercontent.com/Irrational-Worlds/the-prague-event/main/corona-ink.png">
+      <img class="skin-pap" alt="The Corona in warm amber: the cloaked figure erasing light around itself in the temple hall." loading="lazy" src="https://raw.githubusercontent.com/Irrational-Worlds/the-prague-event/main/corona-amber.png">
+      <figcaption>The Corona. It hurt to look. It hurt more to look away.</figcaption>
+    </figure>
+    <p>Yet in that moment, its uncanny radiance turned from you, just a bit. And in that tiny slice of relief&hellip; you knew exactly what to do.</p>
+    <p>You relaxed, letting the white space drift around you: <em>Margin. Gutter. Border. Bleed.</em></p>
+    <p>That fair pale country outside the text.</p>
+    <p>Blissful. Unwritten. The moment before the word.</p>
+    <p>You Read.</p>
+    <p>Your eyes drifted into the text of the thing, deep underneath meaning and context. Into the shadow subtext casts. One word, you needed only find one flaw&hellip; one typo&hellip;</p>
+    <p>It&rsquo;s&hellip; you almost laughed. <em>Verdict.</em> You grinned, the word blossoming in your mind. That was the false bit.</p>
+    <p>It called itself judgment. It was not a judge. It was a Logos with no court, no bench, no one seated above you&mdash;only light borrowed into the shape of a robe.</p>
+    <p>&ldquo;It&rsquo;s not a verdict!&rdquo; Your voice cracked through the smoke. &ldquo;The judgment isn&rsquo;t real&mdash;it&rsquo;s reading a story that already ended! Go at it!&rdquo;</p>
+    <p>The Brute didn&rsquo;t ask twice.</p>
+    <p>Or once.</p>
+    <p>He drove through the light like it was smoke pretending to be a wall&mdash;because for half of one second, it was. His fist found the throat beneath the fire, the seam where verdict became mirror became&hellip;</p>
+    <p>Nothing at all.</p>
+    <p>A screech, unearthly, rent the world.</p>
+    <p>He strangled the light from Corona. It sputtered and singed and sang. It cast false-light into your heart, and, yes&hellip;</p>
+    <p>You wept.</p>
+    <p class="corona">The weeks he stole from you, just &ldquo;having fun.&rdquo;</p>
+    <p class="corona">Your mother, being Right, again.</p>
+    <p class="corona">All, ALL of them, never understanding what you actually were&hellip;</p>
+    <p>It BURST, judgement and wrath and hate drooling onto the floor. Rivulets of fire burned.</p>
+    <p>It screamed and screamed and screamed.</p>
+    <p>Then&hellip; silence.</p>
+    <p>&ldquo;Damn.&rdquo; The Brute panted, then looked to you. He gave you a long, slow nod.</p>
+    <p>Respect.</p>
+    <p>&ldquo;I knew you were perfect for the job,&rdquo; J chuckled.</p>
+    <p>&ldquo;The best,&rdquo; Cherie added.</p>
+    <p>You only smiled. You know why they invited you. It&rsquo;s why J reached out in the first place. What happened in Lisbon had impressed precisely the wrong people.</p>
+    <p>&ldquo;If we&rsquo;re finished?&rdquo; J teased. &ldquo;We have stealing to do.&rdquo;</p>
+    <p>&ldquo;Well,&rdquo; Cherie began, &ldquo;we&mdash;&rdquo;</p>
+    <p>&ldquo;Stop!&rdquo; you cried, eyes widening. &ldquo;Look!&rdquo;</p>
+    <p>It poured from the darkness ahead.</p>
+    <figure class="plate" aria-label="The Inkling, a creature of unstable sentences.">
+      <img class="skin-dark" alt="The Inkling: a many-eyed, many-mouthed thing of crawling black script summoned inside a burning circle, rendered in violet dark." loading="lazy" src="https://raw.githubusercontent.com/Irrational-Worlds/the-prague-event/main/inkling-ink.png">
+      <img class="skin-pap" alt="The Inkling in warm amber: the crawling many-eyed thing inside its summoning circle." loading="lazy" src="https://raw.githubusercontent.com/Irrational-Worlds/the-prague-event/main/inkling-amber.png">
+      <figcaption>The Inkling. Nothing under it holds still.</figcaption>
+    </figure>
+    <p>The creature had no proper shape. Sentences crawled beneath its skin. Every few moments it became something else. It babbled words that meant things no one had ever conceived.</p>
+    <p>&ldquo;That&rsquo;s impossible,&rdquo; you whispered.</p>
+    <p>&ldquo;No,&rdquo; J said. &ldquo;It&rsquo;s not.&rdquo;</p>
+    <p>&ldquo;That&rsquo;s an Inkling,&rdquo; Cherie seethed. &ldquo;Damn.&rdquo;</p>
+    <p>Again, you dropped your thoughts into the margins. You Read the thing on instinct&mdash;the way you&rsquo;d Read the Corona, the way you&rsquo;d Read everything since you were small enough to need to.</p>
+    <p>Nothing held.</p>
+    <p>The word underneath it changed before you finished Reading the word above it. <em>Hunger?</em> You frowned. By the time your thoughts closed around the shape of the letters it had already become <em>Debt</em>, and then <em>Door</em>, and then something that had no word at all, only the ache of an almost-word, a sentence still being written by a hand that would not stop.</p>
+    <p>&ldquo;What the hell,&rdquo; you muttered. You reached for it again anyway. And again. Some old, stubborn part of you refused to believe a thing could exist that you couldn&rsquo;t Read&mdash;refused, right up until the fourth reach came back empty, and something in your chest went quiet and cold in a way the Corona&rsquo;s fire never managed.</p>
+    <p>You couldn&rsquo;t Read it. Not even a little.</p>
+    <p>&ldquo;I can&rsquo;t&mdash;&rdquo; Your voice cracked, and this time it wasn&rsquo;t smoke. &ldquo;It won&rsquo;t hold still long enough to be anything. There&rsquo;s no true word under it. There&rsquo;s just&mdash;&rdquo;</p>
+    <p>&ldquo;More words,&rdquo; J finished. &ldquo;Yeah. We know.&rdquo;</p>
+    <p>&ldquo;That&rsquo;s not a monster,&rdquo; Cherie sneered, already moving. &ldquo;That&rsquo;s a poorly done DRAFT.&rdquo;</p>
+    <p>&ldquo;We got it,&rdquo; J said.</p>
+    <p>You wanted to argue. You wanted, badly, to be the one who got it.</p>
+    <p>You weren&rsquo;t.</p>
+    <p>The two worked together like uncanny music. J was the rhyme; Cherie the reason. You didn&rsquo;t know it was possible to alliterate a thing to death, nor did you know Cherie could end a sentence and wear its bones like a key. You just watched&mdash;useless, for once, in a way that had teeth.</p>
+    <p>&ldquo;Left margin!&rdquo; You shouted it anyway, because you could still see that much&mdash;not the true word, just where the wrongness ran thin. &ldquo;It&rsquo;s thin on the left! Push it left!&rdquo;</p>
+    <p>Cherie didn&rsquo;t ask why. She trusted the Read even half-finished. She reached for the Align &amp; Indent and drove it leftward, and J&rsquo;s rhyme followed the seam you&rsquo;d found, and between them the thing had nowhere stable enough left to become anything at all.</p>
+    <p>The Inkling screamed in three tenses at once and ceased to have happened.</p>
+    <p>You found yourself laughing, again. Wild, drunken joy.</p>
+    <p>Perhaps you shouldn&rsquo;t have. But&hellip;</p>
+    <p>The impossible had become ordinary. The extraordinary had become expected. You stood among your friends, among miracles, and thought:</p>
+    <p><em>Perhaps I have been alive my entire life for this one night.</em></p>
+    <p>In those moments, death seemed like a thing that happened to other people.</p>
+    <div class="onward-wrap">
+      <button class="onward" onclick="go('p-fall')">
+        <span class="o-feeling">Exhilarated</span>
+        <span class="o-title">Dangers and wonders</span>
+      </button>
+    </div>
+      <div class="restart-wrap"><button class="restart" onclick="go('p-cover')">Begin again</button></div>
+  </main>
+
+  <!-- ============ TERRIFIED ============ -->
+  <main class="page" id="p-terrified" data-page hidden>
+    <p class="chapter-mark">Prague&mdash;five years ago</p>
+    <p class="lead-cap">Terror.</p>
+    <p>The next five minutes sliced by, licking away every scrap of sweetness you might have carried into this place.</p>
+    <p><em>Too good to be true,</em> your mind gnawed. <em>I knew it. I knew it.</em></p>
+    <p>You couldn&rsquo;t help but turn, looking over your shoulder.</p>
+    <p>The dread you felt cut wordless, soundless. It wasn&rsquo;t as though you had any proof. No reason. No evidence.</p>
+    <p>And yet&hellip;</p>
+    <p class="interior">Serpents swam in your thoughts. Scorpions crept invisibly along your skin.</p>
+    <p>The corridor beyond lay sheathed in dark marble, so highly polished that it held the world in its skin.</p>
+    <p>Your lanterns drifted beneath your feet like captive stars, and your reflections walked with you in that black, glassy depth.</p>
+    <p>The Order of the Second Dawn had loved mirrors.</p>
+    <p>Every wall in this place carried some suggestion of reflection, of repetition, of one thing becoming another.</p>
+    <p>It struck you suddenly that perhaps the architects had not built a vault at all.</p>
+    <p>Perhaps they had built memory.</p>
+    <p>Your footsteps echoed strangely there. Not wrongly. Merely&hellip; late. Each step seemed to follow itself by the span of a heartbeat, as though the reflections below took a moment to decide whether to imitate you.</p>
+    <p>&ldquo;Still wondering where that ink is,&rdquo; Cherie mused, slightly teasing.</p>
+    <p>&ldquo;The Veridvasc,&rdquo; J insisted. &ldquo;We can&rsquo;t be far from it now. Do we all remember the plan?&rdquo;</p>
+    <p>&ldquo;Get the magic ink,&rdquo; the Brute grumbled. &ldquo;You use the magic ink. I watch the door.&rdquo;</p>
+    <p>&ldquo;I&hellip; Read something for you?&rdquo; you ask. &ldquo;You still haven&rsquo;t been clear on that.&rdquo;</p>
+    <p>&ldquo;That&rsquo;s because I need to see what we&rsquo;re up against,&rdquo; J replied. &ldquo;But yes. The door is guarded. Reading is performed. Then, I complete the work.&rdquo; J patted the satchel hanging at his hip. &ldquo;It shouldn&rsquo;t take long.&rdquo;</p>
+    <p>&ldquo;It shouldn&rsquo;t take long to alter the nature of our world.&rdquo; Cherie shook her head and chuckled. &ldquo;My husband, the optimist.&rdquo;</p>
+    <p>&ldquo;Once I enscribe the proper History,&rdquo; J went on, &ldquo;once I scroll the proper days into existence&hellip;&rdquo;</p>
+    <p>&ldquo;Then, it&rsquo;ll be over.&rdquo; Cherie smiled. &ldquo;Safe. We&rsquo;ll have finally&mdash;&rdquo; Cherie froze. &ldquo;What was that?&rdquo; she whispered.</p>
+    <p>&ldquo;What was what?&rdquo; J asked.</p>
+    <p>But she did not answer. Her eyes had dropped to the black marble.</p>
+    <p>You followed that tremulent gaze.</p>
+    <p>The corridor reflected the four of you with impossible clarity. The Brute&rsquo;s broad shoulders. J&rsquo;s dark coat. Cherie&rsquo;s bone pin, pale as moonlight.</p>
+    <p>And there, among your reflections, stood someone else.</p>
+    <p>At first your mind refused. The figure seemed no more remarkable than another shadow in a dark room, the sort of trick polished stone and uncertain lantern-light might play upon weary thieves. Then your thoughts caught up with your eyes.</p>
+    <p>There were only four of you.</p>
+    <p>The fifth reflection stood very still.</p>
+    <p>Its face turned upward, not toward the corridor above, but toward you.</p>
+    <p><em>You.</em> It smiled.</p>
+    <p>You looked up instinctively.</p>
+    <p>Nothing stood beside you.</p>
+    <p>When your gaze fell again, the thing remained.</p>
+    <p>A cold sensation slipped beneath your ribs. The Brute&rsquo;s reflection bore a knife in its chest. J&rsquo;s bled patiently from both eyes. Cherie&rsquo;s held one hand against her throat, as though trying to keep something precious from spilling out of her.</p>
+    <p>And yours&hellip;</p>
+    <p>Your reflection looked tired. Not weary. Not frightened.</p>
+    <p>Used up.</p>
+    <p>The sort of exhaustion worn by the dead.</p>
+    <p>Its clothes hung in tatters. One sleeve had been torn away. Something had eaten a long crescent from its shoulder, exposing bone. It raised one hand, slowly, almost tenderly, and pointed at you.</p>
+    <p>&ldquo;No,&rdquo; you whispered.</p>
+    <p>Your reflection&rsquo;s mouth opened.</p>
+    <p>Its scream made no sound at all.</p>
+    <p>Then every reflection in the marble opened its mouth and screamed with it.</p>
+    <p>The black stone beneath your feet rippled. The lanterns drowned there. The stars beneath you stretched and smeared, and a hand rose from the polished floor, pale and familiar. Another followed. The thing climbed out of your reflection as easily as a person rises from bed.</p>
+    <p>Not quickly. Not dramatically.</p>
+    <p>It simply ceased to be an image and became a fact.</p>
+    <p>Its body wore your shape. Its eyes held every grief you had ever carried. Its smile knew the day you would die.</p>
+    <p>&ldquo;Afterimage,&rdquo; Cherie breathed. &ldquo;One of the False Sun&rsquo;s servants.&rdquo;</p>
+    <p>&ldquo;Oh&hellip;&rdquo; J frantically began pawing through his satchel.</p>
+    <p>The creature reached for you, grinning, grinning. It touched your forehead, its hand like winter.</p>
+    <p>And&hellip;</p>
+    <p>You died.</p>
+    <p>You died in a thousand, thousand ways.</p>
+    <p><em>An arrow tore through your eye. A knife snaked beneath the ribs. Drowning, drowning beneath black water while something enormous slithered beneath you. A wasting that hollowed, that ate and ate and ate. A fire. A fall. Teeth in the darkness. An old age so lonely it felt like starvation.</em></p>
+    <p>The creature drank deeply. Not from your blood. No, it drank your futures. Possibilities. Greedily, it slurped every terrible ending your life might ever hold. The shadows poured into it like wine.</p>
+    <p>&ldquo;Hey!&rdquo; J yelled, a thousand years away. &ldquo;Get them! Pull them&hellip;&rdquo;</p>
+    <p>That cold reached deeper, winter with fingers, with malice, with hate. It grew deeper, grew blue.</p>
+    <p>You were dying. You had died. You would die. The tenses ran together like ink in water, and that&mdash;</p>
+    <p class="wait">Wait.</p>
+    <p>That was the trick of it. The thing did not kill you. It <em>Read</em> you. It recited your deaths as though they had already happened, as though the sentence had already been set.</p>
+    <p>So you did the one thing you had always been able to do.</p>
+    <p>You went still.</p>
+    <p>Silence. Stillness. Solitude. The white-space. The margin place.</p>
+    <p>That fair pale country outside the text. Blissful. Unwritten. The moment before the word.</p>
+    <p>Already, you Read.</p>
+    <p>Not the deaths. Not the fire. The grammar beneath them. Your eyes skimmed below the arrow and the black water and the wasting and the fall, into the shadow subtext casts, and there you found the word that wasn&rsquo;t true.</p>
+    <p><em>Was.</em></p>
+    <p>The Afterimage spoke in a tense it had not earned. It showed you endings and called them memories. It read your future as a finished thing and dared you to believe the ink had dried.</p>
+    <p>You almost laughed.</p>
+    <p>The ink had not dried. None of it had happened. Every death it poured into itself waited in a tense it did not own.</p>
+    <p class="interior">Not yet. None of it, not yet.</p>
+    <p>You ground your teeth and Read the future the way it truly stood: unwritten. Open. A page still white.</p>
+    <p>You Read a different kind of ending.</p>
+    <p>And the tomorrows came. A hundred of them, unfinished and yours.</p>
+    <p><em>You saw your own hands gone corded and sure, blue veins beneath the skin, the nails still mooned with ink.</em></p>
+    <p><em>Silver fell loose around your face as you bent over a page no one had touched but you.</em></p>
+    <p><em>Somewhere a voice in the next room argued with you about something small and beloved, and you argued back without heat.</em></p>
+    <p><em>You saw tomatoes splitting in the autumn sun and dark soil under your nails.</em></p>
+    <p><em>A warm palm curled in yours across a weathered table.</em></p>
+    <p>Laughter rose from the next room, then nearer, then all around you.</p>
+    <p>Nothing fixed. Nothing promised.</p>
+    <p>Only the bright, unbearable fact that the page still lay open.</p>
+    <p>The Afterimage wailed, horror and fury both. It had come to feed upon endings and found itself choking on a tense it could not swallow.</p>
+    <p>It faltered, fell. It shattered like a mirror.</p>
+    <p>Hands seized your shoulders.</p>
+    <p>&ldquo;Come back,&rdquo; Cherie commanded, her voice impossibly far away. &ldquo;Now. Return. Immediately.&rdquo;</p>
+    <p>The world snapped into place.</p>
+    <p>You knelt upon the marble, gasping. Cherie crouched before you, one hand against your cheek, her brow creased with worry.</p>
+    <p>The Afterimage screamed. Screaled.</p>
+    <p>J stepped toward the shattered thing.</p>
+    <p>You had heard him recite poetry before. You had heard him rhyme impossible things together until reality surrendered. But you had never heard him speak like this.</p>
+    <p>The words rolled from him like thunder. The corridor shook beneath them. The lanterns guttered. The marble rippled and the reflections tore apart like paper in a storm. The creature&rsquo;s body became smoke, then ash, then memory, then less than memory.</p>
+    <p>Then it was gone.</p>
+    <p>J stumbled, almost falling, as he knelt next to you.</p>
+    <p>He offered you a hand.</p>
+    <p>You took it.</p>
+    <p>&ldquo;Hey,&rdquo; he said softly. &ldquo;My hero. You just saved the day.&rdquo;</p>
+    <p>&ldquo;Did I?&rdquo; You grinned. &ldquo;Well, it <em>is</em> what I do.&rdquo;</p>
+    <p>&ldquo;Come on, then.&rdquo; He stood, shaking himself off. &ldquo;The magic ink isn&rsquo;t going to steal itself.&rdquo;</p>
+    <p>The Brute said nothing. He simply stood a little closer than before.</p>
+    <p>Then the four of you continued into the dark.</p>
+    <p>But in that moment, you felt every death you could possibly have following you through the halls.</p>
+    <div class="onward-wrap">
+      <button class="onward" onclick="go('p-fall')">
+        <span class="o-feeling">Terrified</span>
+        <span class="o-title">The Death we deserve</span>
+      </button>
+    </div>
+      <div class="restart-wrap"><button class="restart" onclick="go('p-cover')">Begin again</button></div>
+  </main>
+
+  <!-- ============ THE FALL—placeholder, next hill ============ -->
+  <!-- ============ THE FALL—convergence, all three feelings land here ============ -->
+  <!-- ============ THE FALL—convergence + the room ============ -->
+  <main class="page" id="p-fall" data-page hidden>
+    <p class="chapter-mark">Prague&mdash;five years ago</p>
+    <p class="lead-cap">The last door crouched smaller than you expected.</p>
+    <p>Everything before this door had strutted. Marble, mirror, and fire had glittered and gleamed everywhere. Not here. No, this door sat, low and plain, wood gone soft and gray. Its shabbiness shrouded it like a lesser thief&rsquo;s disguise. You Read no ward, no lock, not even a seam.</p>
+    <p>J did not open it.</p>
+    <p>He stood before it, one hand flat against the wood. Not pushing. Listening.</p>
+    <p>&ldquo;J.&rdquo; Cherie kept her voice low. &ldquo;We don&rsquo;t have all night.&rdquo;</p>
+    <p>&ldquo;I know.&rdquo;</p>
+    <p>&ldquo;Then open it.&rdquo;</p>
+    <p>&ldquo;I know,&rdquo; he said again, smaller this time, as though the door had bitten each word on the way out.</p>
+    <p>The Brute shifted his weight, glanced back the way you&rsquo;d come, said nothing.</p>
+    <p>He didn&rsquo;t need to. You felt it too&mdash;whatever nameless emotion you&rsquo;d carried out of the last room had folded itself up small inside you now.</p>
+    <p>The group put on waiting-room manners. Chapel manners. The hush closed in as if you smelled blood under incense.</p>
+    <p>&ldquo;Whatever&rsquo;s in there,&rdquo; you said, &ldquo;it&rsquo;s not going to open itself.&rdquo;</p>
+    <p>&ldquo;No.&rdquo; J let out something frayed and humor-shaped. &ldquo;No. It never has.&rdquo;</p>
+    <p>Has he stood here before?</p>
+    <div class="onward-wrap">
+      <button class="onward" onclick="go('p-chamber')">
+        <span class="o-feeling">you hold your breath</span>
+        <span class="o-title">The door waits</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- ============ THE CHAMBER ============ -->
+  <main class="page" id="p-chamber" data-page hidden>
+    <p class="chapter-mark">Prague&mdash;five years ago</p>
+    <p class="lead-cap">He pushed and the door gave without sound, a held breath.</p>
+    <p>The room beyond exuded age. You felt it before you saw it&mdash;a pressure behind the eyes, the stale scent of dust and brittle paper. The sense of standing somewhere that predated the word <em>somewhere</em>.</p>
+    <p>No windows. No candles. No braziers. No gold.</p>
+    <p>Only one long stone altar at the center, and resting upon it, a book.</p>
+    <p>A vast book. Wider than the podium it sat on, thick as a post, no one could lift that damned thing. Its cover appeared to be the color of old tea swirled with blood, and its stiff pages, when you looked, were nearly black with ink. The book perched on a vast stone and wooden altar. A monumental plinth. A terrible cradle.</p>
+    <figure class="plate" aria-label="The Palimpsest, open on its altar, an impossible corridor of doors receding through its pages.">
+      <img class="skin-dark" alt="The Palimpsest lying open on its stone altar between carved pillars, its pages showing archway after archway descending toward a distant amber door, rendered in deep indigo." loading="lazy" src="https://raw.githubusercontent.com/Irrational-Worlds/the-prague-event/main/pamimpsest-ink.png">
+      <img class="skin-pap" alt="The Palimpsest on its altar in warm amber, the same impossible corridor of doors receding through its open pages." loading="lazy" src="https://raw.githubusercontent.com/Irrational-Worlds/the-prague-event/main/pamimpsest-amber.png">
+      <figcaption>The Palimpsest. It reads us back.</figcaption>
+    </figure>
+    <p>The open page facing you crawled edge to edge with writing. Ink over ink over ink, scraped and re-inked and scraped again, until the vellum wore grooves where the words ran deepest, thin as breath where five hundred years of scholars had flayed the same lines raw to write their own.</p>
+    <p>The longer you looked, the less it read as a page and the more it read as a wound reopened in the same place over and over again. Old words breathed under younger words. Buried texts hunched below the surface like bones under scar tissue.</p>
+    <p>You Read it, the way you Read everything.</p>
+    <p>And the book Read you back. Sharp, smoldering. You flinch&mdash;</p>
+    <p>&ldquo;Wait.&rdquo; J placed a hand on your shoulder, jolting you out of your Read.</p>
+    <p>&ldquo;Five hundred years,&rdquo; J said, quiet, almost reverent. &ldquo;Five hundred years of crews standing exactly where we&rsquo;re standing. Every one of them found this book. Every one of them tried to take what&rsquo;s under it.&rdquo;</p>
+    <p>&ldquo;Under it?&rdquo; Cherie asked.</p>
+    <p>J crouched beside you, close, his voice pitched low enough the room might not hear it.</p>
+    <p>&ldquo;There&rsquo;s things I didn&rsquo;t tell you.&rdquo; His words held no apology. &ldquo;Not because I didn&rsquo;t trust you. Because I didn&rsquo;t trust <em>me</em>, not until I&rsquo;d stood in here and seen it with my own eyes.&rdquo;</p>
+    <p>You looked at him and he held your gaze.</p>
+    <p>&ldquo;This part of the job was always yours,&rdquo; he said, finally. &ldquo;Not mine. Not Cherie&rsquo;s. Yours. From here I can talk. I can point. I can tell you what I know. But I can&rsquo;t tell you what to <em>do</em>, because I can&rsquo;t see what you can see. This is where you earn every good thing anyone&rsquo;s ever said about you.&rdquo;</p>
+    <p>Behind you, the Brute swore softly at a shadow that had moved wrong.</p>
+    <p>J didn&rsquo;t look away. &ldquo;So here&rsquo;s what I know.&rdquo; He nodded at the vast book, its worn and re-inked pages, the thousand-scarred face of it. &ldquo;That&rsquo;s the Palimpsest. Hundreds of years old, older maybe. They call it an altar, though <em>altar</em> undersells it. It&rsquo;s a book. The book people come to <em>write</em> in. Not stories. Histories. The real thing. Philosophers, mystics, madmen&mdash;they knelt right where you&rsquo;re kneeling and tried to author a new world into being, one that would reach forward and put its hand around every throat after theirs.&rdquo;</p>
+    <p>&ldquo;They author&hellip;&rdquo; you began, eyes narrowing.</p>
+    <p>&ldquo;They&rsquo;re trying to shape History,&rdquo; Cherie supplied. &ldquo;Past, future. They write it into being. It&rsquo;s happened dozens of times. Hundreds.&rdquo;</p>
+    <p>&ldquo;Some wanted it for all of us,&rdquo; J went on. &ldquo;The good of everyone. That&rsquo;s the history they wrote of themselves anyway. Some wanted dynasties. Thrones that should have died with their owners. Empires no decent god should have permitted to stand. Every one of them started here, with a hand and a held breath and this book.&rdquo;</p>
+    <p>&ldquo;And it worked,&rdquo; you said.</p>
+    <p>&ldquo;Sometimes. Mostly it miscarried. But the ones that took&hellip;&rdquo; He shrugged.</p>
+    <p>&ldquo;The Histories that took,&rdquo; Cherie said in a hushed tone as she placed one hand on your shoulder, &ldquo;you&rsquo;ve lived inside your whole life and never knew.&rdquo;</p>
+    <p>J gestured at the surface, and you followed his hand.</p>
+    <p>The surface would not quite hold your eye.</p>
+    <p>&ldquo;Here&rsquo;s the trouble. What you <em>want</em> isn&rsquo;t the book. Not really. It&rsquo;s the ink. A small vial, sitting right on top of the page, in plain view. Except it isn&rsquo;t. You can&rsquo;t see it. Neither can I.&rdquo; He exhaled.</p>
+    <p>&ldquo;Ink.&rdquo; You squinted at the book.</p>
+    <p>Histories roiled around it, the air shimmering like heat off a stone.</p>
+    <p>&ldquo;The histories don&rsquo;t lie flat on the page,&rdquo; J said. &ldquo;They rise. They loom up off it and coil around the vial, a labyrinth of old verdicts and revised fates, and the nearer you get, the more you understand you&rsquo;re not seeing what&rsquo;s <em>there</em>. You&rsquo;re seeing what the book wants you to see. Illusion over truth. Chronicle over fact. The same trick history plays on everyone.&rdquo;</p>
+    <p>&ldquo;And you know how to get past it,&rdquo; you said.</p>
+    <p>&ldquo;No.&rdquo; He said it flat, and it cost him something.</p>
+    <p>&ldquo;If we did,&rdquo; Cherie said and shrugged, &ldquo;you wouldn&rsquo;t be here.&rdquo;</p>
+    <p>&ldquo;I know you have to Read through the Palimpsest to reach the ink,&rdquo; he went on. &ldquo;Everyone who&rsquo;s ever stood here knew that much. How you actually do it, how you Read five hundred years deep and come up holding the true thing? Nobody knows. History blinds us. That&rsquo;s the whole cruelty of it. The book is made of the reason no one can read the book.&rdquo;</p>
+    <p>He let that sit a moment.</p>
+    <p>&ldquo;Now you listen to me, and you listen good.&rdquo; His eyes went hard. &ldquo;The vial has no stopper. Never did. It&rsquo;s an open pot. Five hundred years and it hasn&rsquo;t spilled a drop, because the histories hold it. All that revision coiled around it, that&rsquo;s the only lid it&rsquo;s got. The stuff keeps itself inside by staying still. By staying buried under all&hellip; that.&rdquo; A beat. &ldquo;So whatever you do in there, you do it gentle. The moment that ink can move, it will.&rdquo;</p>
+    <p>&ldquo;It will move?&rdquo; You raise an eyebrow. &ldquo;How?&rdquo;</p>
+    <p>&ldquo;That ink.&rdquo; His voice dropped further, into something like reverence. &ldquo;The True Ink of the Art. They say John dipped his pen in it when he wrote his Revelation, the whole apocalypse at the end of the Bible. They say Da Vinci used it. Popes. Priests who built theologies that ruled continents. Whatever the ink writes, comes true.&rdquo;</p>
+    <p>&ldquo;The book and the ink,&rdquo; you said slowly, &ldquo;together.&rdquo;</p>
+    <p>&ldquo;Together they make reality. <em>A</em> reality, anyway.&rdquo; He nodded. &ldquo;And we need what&rsquo;s in that vial.&rdquo;</p>
+    <p>You looked at the table, at the histories you could almost see moving, at the vial you could not see at all.</p>
+    <p>&ldquo;I don&rsquo;t know how to tell you to take it. That&rsquo;s the honest truth. You&rsquo;re the Reader. You might walk that labyrinth, parse the histories, Read your way to where the ink&rsquo;s actually sitting. I can&rsquo;t Write my way in. I&rsquo;d go blind in there. So I can&rsquo;t tell you the first move.&rdquo;</p>
+    <p>He put a hand on your shoulder, once, and took it away.</p>
+    <p>&ldquo;So you tell me. Do you go <em>at</em> the book, work the histories, peer through the illusion until the truth shows you where the ink&rsquo;s hiding?&rdquo;</p>
+    <p>&ldquo;Or?&rdquo;</p>
+    <p>&ldquo;Or you don&rsquo;t bother with any of it. You put the whole labyrinth out of your mind. You reach straight for the ink. You trust you&rsquo;ll find it, the true thing under the false, without Reading a single history to get there.&rdquo;</p>
+    <p>He sat back on his heels.</p>
+    <p>&ldquo;Your call,&rdquo; he said. &ldquo;It was always going to be your call.&rdquo;</p>
+    <div class="choices">
+      <button class="choice" onclick="enterDig('palimpsest')">
+        <span class="feeling">You go <b>at the book</b>. Work the histories. Read the labyrinth until the illusion gives up where the ink is hidden.</span>
+      </button>
+      <button class="choice" onclick="enterDig('veridvasc')">
+        <span class="feeling">You reach straight for <b>the ink</b>. Ignore the histories. Trust that you&rsquo;ll find the true thing without reading a single lie.</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- ============ THE READING DOWN—the Palimpsest dig ============ -->
+  <main class="page" id="p-palimpsest" data-page hidden>
+    <p class="chapter-mark">the reading down</p>
+
+    <!-- FRAME A: the altar-path (you chose the scars) -->
+    <div id="frame-palimpsest">
+    <p class="lead-cap">You chose the histories.</p>
+    <p>Your hands splayed across the page, and the page quit being paper at once. Skin gone thin and glossy with old violence met yours. Skin scored, flayed, re-inked, and worried open again in the same few places by generations of minds with knives in their fingers.</p>
+    <p>You Read.</p>
+    <p>Not one History. All of them.</p>
+    <p>Someone came here in 1520 and wrote <em>the door stays shut.</em> Someone came in 1690 and flayed that away and wrote <em>the door was never here.</em> Someone in 1811 didn&rsquo;t scrape at all. He smeared his will straight over the older sentence, sloppy, fevered, <em>the door opens for me,</em> and the buried ink welled up through his lie like a bruise rising through skin.</p>
+    <p>None of them finished. None of them agreed.</p>
+    <p>Each writer had knelt here certain they held the true sentence on the tip of their tongue, and each hand had failed. Lied. Lost their nerve. Or heard something stir in the room behind and left the line half-born on the page.</p>
+    <p>The Histories would not lie still. They unscrolled.</p>
+    <p>Ink lifted from the page in filaments too fine for smoke, too ethereal for liquid, and circled the thing at the center in slow ecclesiastical turns.</p>
+    <p>Your eyes skidded each time they neared it. A shape no bigger than a bottle. Smaller, maybe. It sat in perfect stillness while five hundred years of revisions wheeled around it like protective moths.</p>
+    <p>The ink. The Veridvasc. Buried in revision the way a seed lies buried in rot.</p>
+    <p>You reached.</p>
+    <p>The nearest thread of History reached too.</p>
+    <p>It brushed the place where unwitnessed memory coils, and for one heartbeat 1811 climbed into you whole.</p>
+    <p>You were the man with desperate, shaking fingers and bad breath and ink under his nails. You believed your lie hard enough to give it form. You felt that belief pump through you, hot and wet and sovereign.</p>
+    <p>Beneath it, colder than cellar stone, hid the truth: he was the ninth man to kneel there and think himself about to rule the world.</p>
+    <p>You tore your hand back. The History slackened from you at once and drifted into its old turning, unoffended, patient as mildew.</p>
+    <p>&ldquo;Well?&rdquo;</p>
+    <p>J&rsquo;s voice came to you through layers. Parchment. Dust. Bone. As though he&rsquo;d spoken from the far side of a century and pushed the word under the door.</p>
+    <p>You did not answer. Not yet. Some part of you still knelt in 1690, watching a stranger&rsquo;s hand worry a blade through the sentence about a door until the world forgot it had ever opened.</p>
+    <p>The threads kept wheeling. The ink at the center kept its vigil, small and dark and older than age had language for.</p>
+    <p>You Read one layer deeper.</p>
+    </div>
+
+    <!-- FRAME B: the ink-path (you reached straight for it) -->
+    <div id="frame-veridvasc" hidden>
+    <p class="lead-cap">You thrust your hand straight for the ink.</p>
+    <p>No histories. No scaffolding. You cast the whole clamoring labyrinth out of your mind and groped for the one true thing, the vial you could not see, crouched somewhere under that varnish of lies.</p>
+    <p>Your hand clutched nothing.</p>
+    <p>Of course. Truth never waits where the story obviously indicates it does. It squats underneath, breathing through the weight laid over it.</p>
+    <p>The lie sprawled between you and the ink itself, fat with five hundred years of hands and hope and failure.</p>
+    <p>You knew that. Had always known it. Reach blind for a buried thing and all it teaches you is the depth of the grave.</p>
+    <p>&ldquo;It&rsquo;s not&hellip;&rdquo; you said, and your voice drifted back to you thinned and strange, as though the room had licked half of it away. &ldquo;It&rsquo;s not what it seems.&rdquo;</p>
+    <p>&ldquo;Nothing ever is,&rdquo; J said. &ldquo;So Read. You&rsquo;ll have to Read after all.&rdquo;</p>
+    <p>You laid both hands on the page, into the old hide of it, into five hundred years of other hands that had lunged and failed and come back humbled, and you bent to the work.</p>
+    <p>You Read one layer down.</p>
+    </div>
+
+    <div class="layer" id="layer" aria-live="polite">
+      <div class="layer-text" id="layerText">Down, past the last hand, into the one beneath it.</div>
+      <div class="depth-note" id="depthNote"></div>
+    </div>
+
+    <div id="methodsWrap">
+      <div class="methods">
+        <button class="method" data-method="decipher" onclick="dig('decipher')"><span class="m-verb">Decipher</span><span class="m-note">read the letters as they lie</span></button>
+        <button class="method" data-method="scrape" onclick="dig('scrape')"><span class="m-verb">Scrape</span><span class="m-note">take the top layer off by force</span></button>
+        <button class="method" data-method="listen" onclick="dig('listen')"><span class="m-verb">Listen</span><span class="m-note">let the buried sentence speak first</span></button>
+        <button class="method" data-method="remember" onclick="dig('remember')"><span class="m-verb">Remember through</span><span class="m-note">recall what the page forgot</span></button>
+      </div>
+    </div>
+
+    <div class="breakthrough" id="breakthrough" hidden>
+      <div class="veridvasc-line" id="veridvascLine">The page gives. Something wet rises toward your hand&mdash;the true word, after five hundred years.</div>
+      <div class="onward-wrap">
+        <button class="onward" onclick="go('p-spill')">
+          <span class="o-feeling">it comes up</span>
+          <span class="o-title">and it goes over</span>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ============ THE SPILL—shatters into the eight histories ============ -->
+  <main class="page" id="p-spill" data-page hidden>
+    <p class="chapter-mark">Prague—five years ago</p>
+
+    <!-- SPILL A: the altar-path—your care un-lids it -->
+    <div id="spill-palimpsest">
+      <p class="lead-cap">The last history lifted.</p>
+      <p>You Read it away the way you&rsquo;d Read all the others, gentle, careful, a scholar&rsquo;s hands, and it rose off the page and thinned and was gone, and where it had been there was nothing left to hold the ink still.</p>
+      <p>You saw it now. Finally. The vial, small and dark and open-mouthed, sitting in the clear at the center of the page, no history left coiled around it, no varnish, no lie. Just the true thing, naked, the way no one had seen it in five hundred years.</p>
+      <p>You had done everything right. That was the horror of it. You had been so careful.</p>
+      <p>And an open pot, once nothing holds it, does not care how carefully it was uncovered.</p>
+    </div>
+
+    <!-- SPILL B: the ink-path—your haste brings you to the open mouth -->
+    <div id="spill-veridvasc" hidden>
+      <p class="lead-cap">There. Your fingers fumble-found the mouth of it.</p>
+      <p>You Read swiftly, only as deep as you needed. Then you lunged, because Reading felt like the long way round and the ink was <em>right there</em>.</p>
+      <p>&ldquo;You got it?&rdquo; J echoed, words distant.</p>
+      <p>You still couldn&rsquo;t see the ink. Histories swirled before your eyes. Your fingers closed around something hard, though. Something small, open, and slick at the lip, and for one wild heartbeat you held it.</p>
+      <p>One eternal, perfect moment.</p>
+      <p>The True Ink of the Art, the Veridvasc itself, cupped in a hand that could not see what it had taken.</p>
+      <p>An open pot. No stopper. Nothing between world and word but your grip and your nerve.</p>
+    </div>
+
+    <!-- SHARED TAIL: surface into the Errata's battle, the spill, the four hands, the shatter -->
+    <p><em>I got it.</em> You came up. Dizzy, wild. History unspooled around you. Up out of the Reading. Up out of five hundred years. Up into a room&hellip;</p>
+    <p>A screaming room. A room gone to slaughter.</p>
+    <p>&ldquo;Errata!&rdquo; Cherie yelled. &ldquo;Dozens of them!&rdquo;</p>
+    <p>&ldquo;More,&rdquo; J growled. &ldquo;They&rsquo;re doubling in the footnotes!&rdquo;</p>
+    <p>&ldquo;More like the endnotes!&rdquo; she growled. &ldquo;Get over here!&rdquo;</p>
+    <p>The Errata had climbed from the undertext while you burrowed in the page.</p>
+    <p>Red beasts, all slash and hook and spite, every correction the book had ever borne now clawed loose and ravening through the chamber. They sprang from the walls in streaks of living red, tore themselves free of the writing, and fell on the room with all the fury of an adjective that refuses to stay crossed out.</p>
+    <figure class="plate" aria-label="The Errata, dozens of small clawed things, loosed from the undertext into the archive.">
+      <img class="skin-dark" alt="A swarm of small red toothed creatures tearing loose from the shelves and pages of a vast archive, a burning eye-sigil hanging above, rendered in violet dark." loading="lazy" src="https://raw.githubusercontent.com/Irrational-Worlds/the-prague-event/main/erratta-ink.png">
+      <img class="skin-pap" alt="The same swarm of Errata loosed into the archive, rendered in warm sepia." loading="lazy" src="https://raw.githubusercontent.com/Irrational-Worlds/the-prague-event/main/erratta-amber.png">
+      <figcaption>The Errata. Every correction the book ever bore, clawed loose at once.</figcaption>
+    </figure>
+    <p>&ldquo;No!&rdquo; Cherie carved through one and it burst apart in strips of scarlet script, only to writhe back together, changed.</p>
+    <p>The Brute hammered another against the stone until the altar rang, and still it came on, half-flattened, dragging itself forward on reassembled limbs.</p>
+    <p>J stayed by you, close enough that his sleeves brushed yours, one hand hovering near the page, the other ink-ready, guarding your work while the others fought to keep the chamber from closing its teeth.</p>
+    <p>&ldquo;Now!&rdquo; he snapped. &ldquo;Whatever you&rsquo;ve got, now, before it&mdash;&rdquo;</p>
+    <p>The floor gave way beneath the sentence of itself.</p>
+    <p>An Errata thing flung itself at the Brute&rsquo;s back.</p>
+    <p>He turned into it with a roar and smashed it aside, but another raked the floor under his feet, and the stones ripped out of the ground.</p>
+    <p>He lurched, mouth open to cry out.</p>
+    <p>In the same breath, Cherie drove one of the red creatures toward him, trying to pin it between blade and body, and the whole snarl struck at once.</p>
+    <p>The Brute toppled. His arm flew wide for balance and found J instead.</p>
+    <p>J crashed into you.</p>
+    <p>Your hand clenched at the wrong angle in the wrong instant.</p>
+    <p>The Veridvasc&hellip;</p>
+    <p>Spilled.</p>
+    <p>Liquid pitch slid across the page.</p>
+    <p>&ldquo;No!&rdquo; J screamed and roared at once. &ldquo;No, not after&mdash;&rdquo;</p>
+    <p>Cherie lunged for the vial, only to have one of the Errata claw-climb up her back.</p>
+    <p>You and J slammed into each other, scrambling, scrabbling, cursing.</p>
+    <p>The Brute smashed an Errata face into the book, fumbling with meaty fingers.</p>
+    <p>All four of you reached as the ink went over.</p>
+    <p>All four too slow.</p>
+    <p>All four near enough to swear later that someone else&rsquo;s shoulder, elbow, breath, blade, panic had done it. Each of you would remember a different impact. Each of you would be right. Each of you would lie. That argument would stalk the rest of your lives.</p>
+    <p>The book drank the true ink and&hellip; woke.</p>
+    <p>And for one instant, just before everything tore open, you Read the Histories surging over each other clearer than anyone living had ever Read them.</p>
+    <p>Everything. Everything.</p>
+    <p class="turn">Every tomorrow at once. Which do you fall through?</p>
+    <div class="onward-wrap">
+      <button class="onward" onclick="startLabyrinth()">
+        <span class="o-feeling">you cannot read them all</span>
+        <span class="o-title">and yet you try</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- ============ THE LABYRINTH OF HISTORIES ============ -->
+
+  <!-- the three histories: THWOMP in, then eat themselves bottom-up, accelerating -->
+  <main class="page" id="lab-glimpse" data-page hidden>
+    <div class="glimpse-title" id="glimpseTitle"></div>
+    <div class="glimpse-body" id="glimpseBody"></div>
+  </main>
+
+  <!-- the scattered flicker storm (fixed overlay) -->
+  <div id="flicker"></div>
+
+  <!-- J writing—the bright landing after the storm, leads into J's choice -->
+  <div id="writing">
+    <div class="writing-inner">
+      <div class="w-lead">And then J was writing.</div>
+      <button class="onward" onclick="document.getElementById('writing').classList.remove('on'); go('p-choice');">
+        <span class="o-title">watch him choose</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ J'S CHOICE—fixed, shared ============ -->
+  <main class="page" id="p-choice" data-page hidden>
+    <p class="chapter-mark">Prague—five years ago</p>
+    <p class="lead-cap">You&rsquo;d seen him write before. You&rsquo;d heard him cast prose like thunder, watched him rhyme impossible things together until reality gave up and agreed.</p>
+    <p>You heard the joke, too. A hundred times, grinning, one shoulder up: <em>only one thing I'm ever any good at. Maybe someday it pays off.</em></p>
+    <p>You had never once believed him. You had watched him do the one thing all night, and you knew, the way you knew the weight of your own hands, exactly how good he was. You also knew that he could not feel it, and that the not-feeling was part of how it worked.</p>
+    <p>It was paying off now. And it was the worst thing you had ever seen.</p>
+    <p>The panic came up through him from underneath, and behind his eyes a genuine worry smoldered where the grin should have lived. He spewed forth words like a fountain in a downpour. Fast. Faster than you could follow, faster than you had ever seen him go, and somewhere in the speed of it he stopped seeing the room. He stopped seeing Cherie. He stopped, you understood with a small cold drop, seeing <em>you</em>&mdash;not from cruelty, not from forgetting, but because he had gone somewhere the seeing did not reach, down into the page where there was only the work and the not-enough-time.</p>
+    <p>&ldquo;No,&rdquo; he muttered, eyes off in the middle distance. He looked somewhere you could not look, snarled, shook his head. &ldquo;Not that one either.&rdquo;</p>
+    <p>You caught fragments. Not the Histories themselves&mdash;you had walked those, you knew what waited in them, the teeth and the salt and the honey and the wide blue nothing&mdash;but the speed at which he discarded them, faster than judgment, reading down past floors you could not see the bottom of, rejecting them for reasons that lived below your Reading.</p>
+    <p>He was looking for something specific. That was the part you would carry. Not that the tomorrows were terrible. That he was searching them for a quality you could not name, and finding it absent, again, and again.</p>
+    <p>&ldquo;J?&rdquo; Cherie turned in place, wide-eyed.</p>
+    <p>Around the three of you the Histories rose and guttered, rose and guttered, a phantasmagoria of other places and other catastrophes, beautiful and terrible things flickering up and going dark before the eye could keep them.</p>
+    <p>He heard her. He must have&mdash;he always heard her, he had never once in your knowing of them failed to hear her. But now his head did not turn. Now there was only the page, and his dark eyes drinking something that you did not see, would not see, were not built to see. He chewed his lip. He shook his head again.</p>
+    <p>&ldquo;I think,&rdquo; you breathed, &ldquo;you're going to have to choose something.&rdquo;</p>
+    <p>Around you the Histories crested and broke, crested and broke, each one a tomorrow drowning as the next one rose.</p>
+    <p>Errata screeched.</p>
+    <p>You found your fingernails digging into the stone of the altar, into the grooves themselves, as if you could hold on, as if you were about to be wrested bodily out of the world by a book that had finally noticed you were only a noun and nouns serve the needs of the story.</p>
+    <p>He made a sound. Not a word. The smallest sound a man makes when he has stopped looking for the good answer and started reaching for the near one.</p>
+    <p>His hand moved. He took one from close to the top&mdash;shallow, ugly, small, a History near enough to grab, no time to read down to a kinder floor&mdash;and he wrote it fast, hammering it over all the others, pressing it down into every groove at once until the rest had nowhere left to be.</p>
+    <p>&ldquo;I'm sorry.&rdquo; He did not look up. His voice came out of the far place, flat and wrecked. &ldquo;This one keeps us alive.&rdquo;</p>
+    <p>&ldquo;What,&rdquo; you began.</p>
+    <p>&ldquo;It&rsquo;s the only way.&rdquo; He gnashed his teeth, tears streaming. &ldquo;I'm so sorry. Fu&mdash;&rdquo;</p>
+    <p>Every other tomorrow guttered out. The green quiet. The Hive. The wide blue door that wanted nothing. All of them thinning, greying, going the way a name goes from stone&mdash;and gone.</p>
+    <p>And the world, which had been a thousand worlds a heartbeat ago, became only one.</p>
+    <p>And the Errata lunged forward again.</p>
+    <div class="onward-wrap">
+      <button class="onward" onclick="go('p-snap')">
+        <span class="o-feeling">the world</span>
+        <span class="o-title">snaps shut</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- ============ THE SNAP + LOOK-BACK FORK ============ -->
+  <main class="page" id="p-snap" data-page hidden>
+    <p class="chapter-mark">Prague—five years ago</p>
+    <p class="lead-cap">Yet, almost immediately, they slow. Their screechings become whimpers and then tear apart into threads, ribbons, ragged streamers of silence.</p>
+    <p>&ldquo;What&hellip;&rdquo; Cherie breathes.</p>
+    <p>&ldquo;We're fine.&rdquo; J grinds his teeth. &ldquo;After a fashion.&rdquo;</p>
+    <p>The silence grows heavy.</p>
+    <p>Not the held hush of the temple, not the after-quiet of a thing killed, not the pressure-silence of a room where something waits.</p>
+    <p>The plain and terrible silence of a world that has chosen one shape, devoured every other, and has nothing further to say.</p>
+    <p>You step over to the dark altar, running your fingers across dry, crumbling pages. A thousand thousand grooves once breathed there, shifting beneath one another, each offering its own tomorrow. Now one sentence lies drying across every scraped layer at once, pressed flat and final, already the only thing that ever happened here.</p>
+    <p>&ldquo;What&hellip;&rdquo; You lean over, eyes drinking it in. Yet&hellip;</p>
+    <p>You cannot Read the palimpsest.</p>
+    <p>CANNOT.</p>
+    <p>The pages have been emptied of Histories. Every buried text, every possibility, every whisper beneath the scraping has vanished. Only J's scrawling, meticulant words remain.</p>
+    <p><em>Stillness. Silence.</em> A History where the world falls quiet.</p>
+    <p>Those words make your skin crawl for reasons you cannot say.</p>
+    <p>&ldquo;I'm sorry&hellip;&rdquo; J is stumbling, raving. &ldquo;The book wouldn't bind. The Histories would just have kept unraveling. It was unraveling&hellip;&rdquo;</p>
+    <p>&ldquo;&hellip;everything,&rdquo; Cherie whispers. &ldquo;Oh, God.&rdquo;</p>
+    <p>&ldquo;What did you do?&rdquo; you breathe. &ldquo;Stillness? Silence?&rdquo;</p>
+    <p>You loom over the altar, eyes scrambling across its murdered layers. The page you spent everything to reach has closed itself to you, gone mute and ordinary, a book shut by a hand that will not open it again.</p>
+    <p>&ldquo;Every History tumbling out of that thing was worse!&rdquo; J barks. &ldquo;A Teeth History? Did you see the thing with the bees?&rdquo; He waves at the Palimpsest as it begins to crumble.</p>
+    <p>Behind you, the Brute shifts toward the door. For once, the great weapon in his hands hangs forgotten. His eyes remain fixed upon the altar, watching the pages shed themselves into pale ruin.</p>
+    <p>&ldquo;It's going to Redact.&rdquo; Cherie backs away, voice small. &ldquo;By itself.&rdquo;</p>
+    <p>&ldquo;Yes.&rdquo; J still does not look at the altar, at anything real. &ldquo;It's already started. It might Redact the whole temple. We don't want to go with it.&rdquo;</p>
+    <p>&ldquo;BUT WHAT DID YOU DO!?&rdquo; You spin on him, as terrified as you are furious.</p>
+    <p>&ldquo;I saved our lives,&rdquo; he mourns. Half-stumbling, he lurches toward the door. &ldquo;There's nothing left to say.&rdquo;</p>
+    <p>Cherie shares a long, lost glance with you. Then, taking a breath, she follows.</p>
+    <p>The Brute backs away last, keeping his face toward the crumbling altar until the dark swallows it from view.</p>
+    <p>And for a moment, in the turning, in the being-herded&hellip;</p>
+    <p>Something on the altar moves&hellip;</p>
+    <p>&hellip;or does not.</p>
+    <p>A flicker at the edge of the page, small, wrong, the kind of motion a thing makes when it does not want to be caught making it.</p>
+    <div class="choices">
+      <button class="choice" onclick="go('p-lookback')">
+        <span class="feeling">You look back.</span>
+      </button>
+      <button class="choice" onclick="go('p-nolook')">
+        <span class="feeling">You have to go. The entire room is Redacting as you stand here.</span>
+      </button>
+    </div>
+  </main>
+
+  <main class="page" id="p-lookback" data-page hidden>
+    <p class="chapter-mark">Prague—five years ago</p>
+    <p class="lead-cap">You look back.</p>
+    <p>Of course. You are the one who Reads the thing no one else can Read; the not-looking was never going to happen.</p>
+    <p>On the altar, in the drying grooves of J's final sentence, sits a single drop of ink.</p>
+    <p>Not spilled. He must have splattered it when he wrote those heavy, impossible words.</p>
+    <p><em>Stillness. Silence.</em></p>
+    <p>You don't know what they mean, and yet&hellip;</p>
+    <p>There's something heavy in those words, something you feel with every breath.</p>
+    <p>The Ink gathers the dying light and keeps it, a small dark coin of wet in a room where everything else has already set.</p>
+    <p>The altar crumbles and, around you, the temple begins to do the same.</p>
+    <p>You touch the Ink.</p>
+    <p>You don't decide to. Dreamlike, your hand goes down and your finger finds it and&hellip;</p>
+    <p class="interior">(History. Every History. A thunderstorm of History)</p>
+    <p>The Ink comes away on your skin, and it stays wet there, warm&hellip;</p>
+    <p class="interior">(The way a held hand is warm, the way a word is warm the moment before it's spoken.)</p>
+    <p>&hellip;and sinks into your skin.</p>
+    <p>Slowly.</p>
+    <p>Almost in a trance, you watch the Ink vanish beneath your flesh. Oddly, this feels normal. Typical.</p>
+    <p>Right.</p>
+    <p>The Ink knows where it's going. As it sinks, a thought drifts upward, bright, true.</p>
+    <p class="interior">We can fix this.</p>
+    <p>The thought arrives whole, in your own voice, though you could not say what's broken. You only know the warmth agrees with you.</p>
+    <p>J shouts your name down the corridor&mdash;once, hard, a word hammered flat.</p>
+    <p>You run.</p>
+    <figure class="plate" aria-label="The crew flees down a collapsing corridor toward a distant lit door.">
+      <img class="skin-dark" alt="Figures running down a long stone corridor toward a distant lit doorway, flanked by looming shadow-shapes, rendered in deep blue-violet." loading="lazy" src="https://raw.githubusercontent.com/Irrational-Worlds/the-prague-event/main/flight-ink.png">
+      <img class="skin-pap" alt="The same flight down the corridor toward the lit door, rendered in warm amber-gold." loading="lazy" src="https://raw.githubusercontent.com/Irrational-Worlds/the-prague-event/main/flight-amber.png">
+      <figcaption>The dark takes the altar behind you.</figcaption>
+    </figure>
+    <p>The dark takes the altar behind you. The warmth sinks deeper.</p>
+    <p>It never leaves.</p>
+    <div class="onward-wrap">
+      <button class="onward" onclick="go('p-street')">
+        <span class="o-feeling">out</span>
+        <span class="o-title">into the night</span>
+      </button>
+    </div>
+  </main>
+
+  <main class="page" id="p-nolook" data-page hidden>
+    <p class="chapter-mark">Prague—five years ago</p>
+    <p class="lead-cap">You do not look.</p>
+    <p>J says leave, and you trust him.</p>
+    <p>That is the thing you will turn over for five years, in the small hours: that in the one moment it mattered, you let the best hand you ever followed steer your eyes to the dark ahead, and keep them there.</p>
+    <p>Whatever moved on the altar&mdash;if anything moved&mdash;moved without a witness. The corridor swallows the chamber. Behind you the temple begins its long unmaking, and you walk out of the only room you were ever meant to Read with your eyes full of ordinary dark.</p>
+    <p>And here is the cruelty: nothing happens. Nothing comes away on your skin. No warmth sinks in and stays. You walk out clean, unmarked, exactly as J wanted, carrying only the four of you and the silence and the ordinary weight of a job survived.</p>
+    <p>It should feel like safety.</p>
+    <p>It will not.</p>
+    <p>Some nights, five years on, you will lie awake and feel the shape of the thing you did not see&mdash;not the thing itself, only the hole where it would be, the exact size and cold of a knowledge you refused.</p>
+    <p>Not a wound. A window.</p>
+    <p>You do not know what waited in the drying grooves of J's last sentence. A single drop of Ink, unspilled, patient, holding the last of the light the way a held hand holds warmth. It wanted skin. It had chosen some. Yours went out the door instead, and the dark took the altar, and the temple ground itself to ruin around one small wet coin of every History that ever was.</p>
+    <p>Ink does not spill by accident. Ink does not dry when it has somewhere to be.</p>
+    <p>It will come the long way round. A slower door. A longer road.</p>
+    <p>It has all the time there is.</p>
+    <div class="onward-wrap">
+      <button class="onward" onclick="go('p-street')">
+        <span class="o-feeling">out</span>
+        <span class="o-title">into the night</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- ============ THE STREET—fixed ending, Cherie's question ============ -->
+  <main class="page" id="p-street" data-page hidden>
+    <p class="chapter-mark">Prague—five years ago</p>
+    <p class="lead-cap">&ldquo;Damn it,&rdquo; J growls, stepping into the street. &ldquo;After all that&hellip;&rdquo;</p>
+    <p>You come up out of the earth into a night that is wrong, and none of you can say how.</p>
+    <p>That is the worst of it, standing on the wet Prague stone with the temple looming behind you: the wrongness has no edge to press. The air only air. The streetlamps burn their ordinary sodium orange, the dark pools between them the way dark has always pooled, the cobbles shine with a rain you do not remember falling.</p>
+    <p>&ldquo;Keep going.&rdquo; Cherie looks over her shoulder. &ldquo;We can talk a few blocks away, surely.&rdquo;</p>
+    <p>Seven streets later, you huddle in an alleyway. And somewhere in those seven streets, the Reader in you finds the edge.</p>
+    <p>No traffic. Not thin traffic, not late traffic&mdash;none. No engines idling at the lights, no trams grinding the night down to size, no drunks arguing their way home from the last warm door. The windows above you dark, all of them, at an hour when a city should still be arguing with itself. You look up, the way the Brute keeps looking up, and you understand what he cannot: the sky is empty. No planes. Not one blinking light crossing all that black.</p>
+    <p>The city is holding still.</p>
+    <p>The city has gone quiet.</p>
+    <p>You know those words. You watched them dry.</p>
+    <p>&ldquo;It worked?&rdquo; The Brute says it to no one. &ldquo;Didn't it? It worked?&rdquo;</p>
+    <p>&ldquo;I'm afraid so.&rdquo; J glances around, as if expecting sirens that do not come. &ldquo;This isn't our History. Not what I wanted, or what was planned.&rdquo;</p>
+    <p>&ldquo;What IS it?&rdquo; You can't keep the frantic thread out of your voice. &ldquo;What did you write?&rdquo;</p>
+    <p>You stare at him. You survived&mdash;you know you survived, you stand here breathing the almost-right air&mdash;and survival is supposed to feel like something, relief or triumph or the giddy sickness of a job come off clean. Instead there is only this: four of you in an alley, alive, in a night that will not quite agree to be a night.</p>
+    <p>&ldquo;The power of the Ink was collapsing the Histories.&rdquo; J's voice quiet, wrecked, final. He still does not look at any of you. &ldquo;So we needed a History where its potency didn't matter. The only safe place.&rdquo;</p>
+    <p>&ldquo;What does that mean?&rdquo;</p>
+    <p>&ldquo;It's the worst.&rdquo; He laughs, bitter. &ldquo;The shortest. The easiest. We live in the stupidest timeline.&rdquo;</p>
+    <p>Stupidest. You turn the word over and it will not stop turning.</p>
+    <p>He watched the tomorrows come tumbling out of that book&mdash;the Teeth, the Bees, the Blue That Never Ends&mdash;and he chose this one. A world holding still. A world gone quiet. You do not know yet what shape a whole planet's stillness takes, what could send every soul indoors and seal every door and sweep every plane out of the sky.</p>
+    <p>You are about to find out.</p>
+    <p>&ldquo;So what do we do?&rdquo; The Brute again, still watching the empty sky.</p>
+    <p>A long moment passes.</p>
+    <p>J finally looks at you. All of you. Something in his face has already started the next five years.</p>
+    <p>&ldquo;We&hellip; write a new story.&rdquo; He says it flat, the way he wrote the sentence that saved you. &ldquo;Whatever it takes. However long. We spilled the Ink, and I did the writing.&rdquo; A breath. &ldquo;That's mine. So we write a new chapter.&rdquo;</p>
+    <p>Nobody argues. Four people stand in an alley in the stupidest of all possible Histories, under a sky with nothing in it, in a silence J wrote by hand.</p>
+    <p>&ldquo;J.&rdquo; Cherie's voice does a thing. You hear it&mdash;the small catch, the flattening&mdash;the exact thing an Editor's voice does when it comes up against a dead word, a word with no world behind it, a word that should not be able to exist and does. &ldquo;J, my phone.&rdquo;</p>
+    <p>Habit had her thumb it awake. The screen lights her face from below, and she frowns at it, and reads whatever is there again and again.</p>
+    <p>&ldquo;Guys.&rdquo; She turns it toward you, though you are too far to see, though it does not matter that you cannot see.</p>
+    <p>&ldquo;What's COVID-19?&rdquo;</p>
+    <div class="restart-wrap"><button class="restart" onclick="go('p-cover')">Begin again</button></div>
+  </main>
+
+<script>
+  const html = document.documentElement;
+  const btn = document.getElementById('skinBtn');
+  const label = document.getElementById('skinLabel');
+  html.setAttribute('data-skin', 'dark');
+  html.setAttribute('data-on-cover', '');   // start on the cover; hides corner toggle
+
+  function syncSkinUI(){
+    const dark = html.getAttribute('data-skin') === 'dark';
+    label.textContent = dark ? 'Ink' : 'Papyrus';
+    const ci = document.getElementById('coverInk');
+    const cp = document.getElementById('coverPap');
+    if (ci && cp){ ci.classList.toggle('active', dark); cp.classList.toggle('active', !dark); }
+  }
+  function setSkin(which){
+    html.setAttribute('data-skin', which);
+    syncSkinUI();
+  }
+  syncSkinUI();
+
+  btn.addEventListener('click', () => {
+    const dark = html.getAttribute('data-skin') === 'dark';
+    setSkin(dark ? 'papyrus' : 'dark');
+  });
+
+  let chosenPath = 'palimpsest';
+  function enterDig(path) {
+    chosenPath = path;
+    const fp = document.getElementById('frame-palimpsest');
+    const fv = document.getElementById('frame-veridvasc');
+    if (fp && fv) {
+      fp.hidden = (path === 'veridvasc');
+      fv.hidden = (path !== 'veridvasc');
+    }
+    go('p-palimpsest');
+  }
+
+  // editing-only nav: track page history for a BACK button
+  const EDITING = true;            // flip to false for release—hides the editing nav
+  let navStack = [];
+  let navSuppress = false;         // true while going back, so we don't re-push
+
+  let navBusy = false;
+  function go(id) {
+    if (navBusy) return;
+    const cur = document.querySelector('[data-page]:not([hidden])');
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!cur || reduce) { goSwap(id); return; }
+    navBusy = true;
+    cur.classList.add('unwriting');
+    setTimeout(() => {
+      cur.classList.remove('unwriting');
+      const next = document.getElementById(id);
+      if (next) next.classList.add('setting');
+      goSwap(id);
+      setTimeout(() => {
+        if (next) next.classList.remove('setting');
+        navBusy = false;
+      }, 500);
+    }, 330);
+  }
+
+  function goSwap(id) {
+    // record where we were, unless this hop is itself a Back
+    if (!navSuppress) {
+      const cur = document.querySelector('[data-page]:not([hidden])');
+      if (cur && cur.id && cur.id !== id) navStack.push(cur.id);
+    }
+    navSuppress = false;
+
+    // the corner skin-toggle is hidden only on the cover
+    if (id === 'p-cover') { html.setAttribute('data-on-cover', ''); navStack = []; }
+    else { html.removeAttribute('data-on-cover'); }
+    if (id === 'p-spill') {
+      const sp = document.getElementById('spill-palimpsest');
+      const sv = document.getElementById('spill-veridvasc');
+      if (sp && sv) {
+        sp.hidden = (chosenPath === 'veridvasc');
+        sv.hidden = (chosenPath !== 'veridvasc');
+      }
+    }
+    document.querySelectorAll('[data-page]').forEach(p => p.hidden = true);
+    const next = document.getElementById(id);
+    if (next) next.hidden = false;
+    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+    if (next) next.querySelectorAll('.choice, .door').forEach(c => { c.style.animation = 'none'; void c.offsetWidth; c.style.animation = ''; });
+    if (id === 'p-palimpsest') resetDig();
+    updateEditNav();
+  }
+
+  function navBack() {
+    if (!navStack.length) return;
+    const prev = navStack.pop();
+    navSuppress = true;
+    go(prev);
+  }
+
+  function updateEditNav() {
+    if (!EDITING) return;
+    const b = document.getElementById('editBack');
+    if (b) b.style.visibility = navStack.length ? 'visible' : 'hidden';
+  }
+
+  function initEditNav() {
+    if (!EDITING) return;
+    const bar = document.createElement('div');
+    bar.id = 'editNav';
+    bar.innerHTML =
+      '<button id="editBack" onclick="navBack()">\u2190 Back</button>' +
+      '<button id="editRestart" onclick="go(\'p-cover\')">Begin again</button>';
+    document.body.appendChild(bar);
+    updateEditNav();
+  }
+
+  // ============================================================
+  // THE READING DOWN—the Palimpsest dig
+  // ============================================================
+  let breakChance = 0.05;      // starting chance—tuned so the typical reader reads ~7 layers
+  const DRIFT     = 0.018;     // gentle climb; guarantees surfacing without a locked-door feel
+  const MAX_CHANCE = 0.9;
+  const METHOD_MOD = { decipher: 1.0, scrape: 1.4, listen: 0.7, remember: 1.1 };
+
+  const LAYERS = [
+    { text: "You read of a city that never was, burning behind time, and the smoke of it drifts forward into rooms you have not yet entered." },
+    { text: "You read of your own death. The words smolder as you pass them, warm the way a coal stays warm, patient to be needed." },
+    { text: "You read of THE MOON; SHE BURNS YOUR HEART YOUR HEART YOUR HEART, and each repetition takes a little more of the muscle." },
+    { text: "You read of a door that opens only when its maker forgets it. Someone here has been trying very hard to forget." },
+    { text: "You read of angels buried upside down beneath the first thunder, still singing, the sound coming up through the soles of your feet." },
+    { text: "You read of a god with no worshippers, gnawing the roots of sleep, and you feel the dream you meant to have tonight come loose." },
+    { text: "You read of a staircase descending through your own reflection, each step a year you have not lived, worn smooth by your going down." },
+    { text: "You read of a black orchard where the fruit whispers your childhood name in a voice you had forgotten was your mother's." },
+    { text: "You read of a candle flame that remembers every face it has eaten, and it turns, slowly, to consider yours." },
+    { text: "You read of a saint whose shadow outlived the body, and it has been waiting on this page five hundred years for a body to borrow." },
+    { text: "You read of a knife that cuts yesterday from the bone. The scar it leaves is a day you can no longer prove you lived." },
+    { text: "You read of a bell beneath the earth that rings only for the unborn, and something in you answers it that has not been born yet." },
+    { text: "You read of the book reading you back, line by line, vein by vein, and it reaches the line where you are reading this." },
+    { text: "You read of THE EYE IN THE WELL; IT BLINKS WHEN YOU LIE, and you have not spoken, and still it blinks." },
+    { text: "You read of a lantern filled with captured screams, and one of them, faint, in the oldest layer, wears your voice." },
+    { text: "You read of a tower built downward into God's blind spot, and every crew that reached this altar built one more floor of it." },
+    { text: "You read of THE NAMES BELOW NAMES BELOW NAMES, and somewhere in that descent your own name waits, spelled almost right." },
+    { text: "You read of a lake that reflects only what has murdered you, and the water is very still, and very full." },
+    { text: "You read of the first corpse, which has not finished dying, and will not, until the last reader closes the last page." },
+    { text: "You read of a language that blooms in the lungs and strangles the speaker, and you notice you have stopped breathing to read." },
+    { text: "You read of a clock whose hands point inward, counting not the hours left to the world but the hours left to you." },
+    { text: "You read of a door that opens into the moment before your birth, and a draft comes through it, cold, smelling of a room you never saw." },
+    { text: "You read of THE THING BEHIND THE THING BEHIND THE THING, and each layer you scrape only sets it one remove deeper and one degree nearer." },
+    { text: "You read of your name, misspelled by fate and corrected in blood, and the correction is fresh, and the ink is yours." },
+    { text: "You read of a chapel where every prayer returns with teeth, and the walls of this room have begun, very quietly, to pray." },
+    { text: "You read of the hunger beneath hunger, purring in its sleep, and your reading is the hand that strokes it awake." },
+    { text: "You read of a cup that fills with whatever you most regret, and it is fuller than you are ready for, and it does not spill." },
+    { text: "You read of THE HOLLOW SUN; IT CALLS YOU BY YOUR TRUEST WOUND, and you answer, because no one has ever named it so exactly." },
+    { text: "You read of seven kings wearing one skull between them, and each turns it to face you when it is his turn to hate." },
+    { text: "You read of a house that walks at night on human hands, and it has walked a long way to stand where you are standing." },
+    { text: "You read of a garden where every flower dreams of teeth, and the dreaming has gone on so long the soil has started to bite." },
+    { text: "You read of a mirror that refuses the living, and you understand why your reflection lagged in the marble halls behind you." },
+    { text: "You read of winter locked in a jar and fed with names, and the jar is nearly full, and it is hungry for one more." },
+    { text: "You read of a child crowned with flies in a room without doors, and it has been waiting for someone to read it a way out." },
+    { text: "You read of the first lie, still crawling, still warm, and it recognizes you, the way a thing recognizes its own author." },
+    { text: "You read of a serpent coiled around the sun's black heart, tightening by one scale for every century a thief has knelt here." },
+    { text: "You read of a door in your chest, and something patient behind it, and the reading has begun, very gently, to work the latch." },
+    { text: "You read of a crown that drinks the skull beneath it, and it thirsts, and it has been a long time between kings." },
+    { text: "You read of a moth the size of grief beating at the window of the world, and the glass is thinner on your side." },
+    { text: "You read of an hour that slipped from time and learned to hunt, and it has caught your scent in the space between two heartbeats." },
+    { text: "You read of the knife-moon sharpening itself on the sea, and the tide comes in tonight wherever you are standing." },
+    { text: "You read of a kingdom where mirrors rule and men serve, and you have brought so many reflections into this glassy dark." },
+    { text: "You read of THE BLOOD THAT REMEMBERS THE BLOOD THAT RETURNS, and something in your veins answers the call of its own kind." },
+    { text: "You read of a hymn that unthreads the listener from history, and you feel a single stitch of yourself come loose as you read." },
+    { text: "You read of a stair in the dark, and the footstep that finds it, and the footstep is behind you now, and it is patient." },
+    { text: "You read of a black dog barking in the throat of every king, and you feel it clear its throat, deep beneath your own." },
+    { text: "You read of coins minted with the faces of the dead, and one of them wears a face you will not recognize for five more years." },
+    { text: "You read of a manuscript written in the pauses between screams, and you realize you have been reading the screams as silence." },
+    { text: "You read of rain falling upward from open graves, and the ceiling of the vault has begun, softly, to weep in the wrong direction." },
+    { text: "You read of the last prophet coughing feathers into a golden bowl, and the bowl sits filled, and the feathers are still warm." },
+    { text: "You read the hand of 1520 again, still writing THE DOOR STAYS SHUT, still certain, and you know now that certainty was the last thing he felt before they dragged him out." },
+    { text: "You read the hand of 1690 again, scraping THE DOOR WAS NEVER HERE across someone else's failure, and for a moment your own hand moves with his, in the same groove, at the same wrong angle." },
+    { text: "You read the hand of 1811 again, sloppy and desperate, THE DOOR OPENS FOR ME, and under his certainty the cold arithmetic: ninth. And you, reading him, are the tenth, and you feel the eleventh already leaning over your shoulder." },
+    { text: "You read of a final page that has waited since before ink, and you understand, with a cold turn, that you are near it now.", closer: true },
+    { text: "You read of the last door, already open, already waiting, and the scrapes thin, and light comes up through the stone from underneath.", closer: true },
+    { text: "You read of the wet word at the root of every other word, and your fingers, in the grooves, come away damp.", closer: true },
+  ];
+
+  let pool = [], digCount = 0, broken = false, curChance = breakChance;
+
+  function reshuffle() {
+    pool = LAYERS.map((l,i)=>i);
+    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+  }
+  function drawLayer() { if (pool.length === 0) reshuffle(); return LAYERS[pool.pop()]; }
+
+  function resetDig() {
+    curChance = breakChance; digCount = 0; broken = false; reshuffle();
+    const lt = document.getElementById('layerText');
+    if (lt) { lt.classList.remove('sinking'); lt.textContent = "Down, past the last hand, into the one beneath it."; lt.style.animation='none'; void lt.offsetWidth; lt.style.animation=''; }
+    const dn = document.getElementById('depthNote'); if (dn) dn.textContent = "";
+    const mw = document.getElementById('methodsWrap'); if (mw) mw.style.display = "";
+    const ly = document.getElementById('layer'); if (ly) ly.style.display = "";
+    const bt = document.getElementById('breakthrough'); if (bt) bt.hidden = true;
+  }
+
+  function dig(method) {
+    if (broken) return;
+    digCount++;
+    const mod = METHOD_MOD[method] || 1.0;
+    const effChance = Math.min(curChance * mod, MAX_CHANCE);
+    const success = Math.random() < effChance;
+    const lt = document.getElementById('layerText');
+    lt.classList.add('sinking');
+    setTimeout(() => {
+      if (success) {
+        broken = true;
+        document.getElementById('methodsWrap').style.display = 'none';
+        document.getElementById('layer').style.display = 'none';
+        document.getElementById('breakthrough').hidden = false;
+      } else {
+        const layer = drawLayer();
+        if (layer.closer) curChance = Math.min(curChance + DRIFT*1.5, MAX_CHANCE);
+        lt.classList.remove('sinking');
+        lt.textContent = layer.text;
+        lt.style.animation = 'none'; void lt.offsetWidth; lt.style.animation = '';
+        document.getElementById('depthNote').textContent = "You read down another layer. The bottom has not answered.";
+        curChance = Math.min(curChance + DRIFT, MAX_CHANCE);
+      }
+    }, 600);
+  }
+
+  // ============================================================
+  // THE LABYRINTH OF HISTORIES
+  // ============================================================
+  // three histories THWOMP in, then eat themselves bottom-up, each faster than the last
+  const PRINT_SETTLE  = 460;   // ms for the block to land + settle before the first eat
+  const HOLD_BASE     = 1500;  // pause after landing before the eat begins (history 1)
+  const EAT_GAP_BASE  = 1050;  // gap between line-eats (history 1)
+  const PULSE_LEAD    = 360;   // amber glow duration before a line is eaten
+  const CHAIN_SPEEDUP = 0.66;  // each successive history: gaps * 0.66—merciless
+  const MIN_GAP       = 150;   // floor so the last history is nearly a blur
+  const FADE_TO_NEXT  = 700;   // dark beat between histories
+  // flicker (the shard-storm after the three)—unchanged
+  let flickerStart = 620;
+  const FLICKER_SHRINK = 0.86;
+  const FLICKER_MIN = 70;
+  const FLICKER_COUNT = 30;
+
+  const HISTORIES = [
+    { title:"The Green Quiet", lines:[
+      "The cabin was not a safe house for long.",
+      "Forty-eight hours after Prague, the internet fell away like leaves.",
+      "Cherie found one voice on the radio. <em>&ldquo;Vancouver is forest. Calgary is forest. Chicago is&mdash;&rdquo;</em> Birdsong swallowed the rest.",
+      "The Brute took the axe out to split wood. He never came back.",
+      "Monarch butterflies covered him so completely he looked asleep beneath an orange and black blanket.",
+      "Then the butterflies lifted. Milkweed had already flowered through his ribs.",
+      "<em>&ldquo;Did we do this?&rdquo;</em> Cherie whispered. <em>&ldquo;We didn&rsquo;t write this&hellip; did we?&rdquo;</em>",
+      "The trees did. An elk stumbled from the forest, immense beneath curtains of moss, butterflies opening and closing on its antlers.",
+      "It watched you. Half bugle, half croak, a sound gurgled up from its throat. Your name.",
+      "The butterflies boiled from its mouth, its antlers, its hide&mdash;and in the next instant they were all you could see."
+    ]},
+    { title:"The Drowned Choir", lines:[
+      "The sea had been rising since before you woke, and it was rising in tune.",
+      "Not climbing the way water climbs. Climbing the way a note climbs. It had pitch.",
+      "There was no horizon. The sea had stood up.",
+      "You heard them before you saw them. A hymn sung through a mile of dark, felt in the teeth before the ear could find it.",
+      "Then the worshippers came up out of the surf on limbs never meant for standing. Blown-lamp eyes. A wet light guttering at each brow.",
+      "They were not looking to conquer. They were looking for the soft warm inland things that did not know the hymn.",
+      "You reached for the read&mdash;for the false word under the flood. There was no false word. All of it was true.",
+      "The sea was only ever a lid. The lid was off.",
+      "The nearest turned its blown-lamp eyes on you and opened the ruin of its jaw. Not to bite. To sing.",
+      "The pitch of the water found the pitch of the blood in you, and you felt your own mouth begin to open&mdash;"
+    ]},
+    { title:"The Honeyed Hour", lines:[
+      "Twilight came too gold, too thick, the light gone viscous, pooling in the low places of the street.",
+      "You had always loved this hour. That was the first cruelty.",
+      "The ground began to buzz. Then the holes opened&mdash;the little dark mouths in the earth you had always called drains.",
+      "Out of them poured the Apyri. Golden, furred and plated both, too many joints folded into a shape that hummed.",
+      "They took the small ones first. Not from malice. From yield. A smaller body makes a sweeter honey.",
+      "Six golden limbs closed around you, and the first of the nectar touched your mouth.",
+      "Sweetness like a wall, like a drowning. The fear went soft at the edges.",
+      "They sealed you. You felt the wax and did not mind. Your body a comb now. It was always going to be a comb.",
+      "Two hundred of them for every one of you. The ratio of a thing that had been farming you since before you had a word for <em>farm</em>.",
+      "And it was not even sad, down there in the sweetness. Only the buzzing, and the gold, and the last of you dissolving&mdash;"
+    ]},
+  ];
+
+  const SHARDS = [
+    "There is a place where the sun shines azure&mdash;",
+    "At the bottom of Ingra's well a serpent&mdash;",
+    "A tree, vaster than the sky, is falling&mdash;",
+    "A city where the dead keep the ledgers and the living&mdash;",
+    "An ocean of milk, and something curtsying in the silt&mdash;",
+    "The year they voted the moon down, and the choirs&mdash;",
+    "A door in your chest, already opening&mdash;",
+    "Rain falling upward out of every grave at&mdash;",
+    "The hour that slipped its cage and learned to&mdash;",
+    "A world that is only teeth, and it has your&mdash;",
+    "Somewhere a bell rings only for the unborn and you&mdash;",
+    "The green quiet, the cedar, the fifth cup drying by the&mdash;",
+    "A country sewn from the coats of the drowned&mdash;",
+    "Where the mountains kneel each dawn to a sun that never&mdash;",
+    "The last library, and the librarian is your&mdash;",
+    "A festival of lanterns, each one a face you failed to&mdash;",
+    "The winter that fell in a single afternoon and never&mdash;",
+    "A cathedral of salt, and the tide is coming&mdash;",
+    "Every clock in the world striking a thirteenth&mdash;",
+    "A garden where the roses remember being&mdash;",
+    "The child crowned with flies, still waiting for someone to&mdash;",
+    "A sky peeled back like a lid, and behind it&mdash;",
+    "The bridegroom of bells, ringing once for each&mdash;",
+    "And somewhere, always, the fifth of you turning to&mdash;",
+  ];
+
+  // the three histories play automatically: THWOMP in, eat bottom-up, accelerate, hand to flicker
+  let chainTimers=[];
+  function chainClear(){ chainTimers.forEach(clearTimeout); chainTimers=[]; }
+  function chainAfter(ms,fn){ chainTimers.push(setTimeout(fn,ms)); }
+
+  function startLabyrinth(){
+    chainClear();
+    go('lab-glimpse');
+    runHistoryChain();
+  }
+
+  function playHistory(hIdx, chainPos){
+    return new Promise(resolve=>{
+      const h=HISTORIES[hIdx];
+      const title=document.getElementById('glimpseTitle');
+      const body=document.getElementById('glimpseBody');
+      title.className='glimpse-title'; title.innerHTML=h.title;
+      body.innerHTML='';
+      const els=h.lines.map(txt=>{
+        const p=document.createElement('p'); p.className='hline'; p.innerHTML=txt;
+        body.appendChild(p); return p;
+      });
+
+      const gap=Math.max(EAT_GAP_BASE*Math.pow(CHAIN_SPEEDUP,chainPos),MIN_GAP);
+      const hold=Math.max(HOLD_BASE*Math.pow(CHAIN_SPEEDUP,chainPos),MIN_GAP*2);
+
+      // THWOMP—title and all lines land together as one heavy block
+      chainAfter(0,()=>{ title.classList.add('printed'); els.forEach(el=>el.classList.add('printed')); });
+
+      // eat bottom-up, then the title last
+      let t=PRINT_SETTLE+hold;
+      for(let i=els.length-1;i>=0;i--){
+        const el=els[i];
+        chainAfter(t,()=>el.classList.add('pulse'));
+        chainAfter(t+PULSE_LEAD,()=>{el.classList.remove('pulse');el.classList.add('eaten');});
+        t+=gap;
+      }
+      chainAfter(t,()=>title.classList.add('pulse'));
+      chainAfter(t+PULSE_LEAD,()=>{title.classList.remove('pulse');title.classList.add('eaten');});
+      t+=gap;
+
+      chainAfter(t+FADE_TO_NEXT,resolve);
+    });
+  }
+
+  async function runHistoryChain(){
+    for(let i=0;i<HISTORIES.length;i++){ await playHistory(i,i); }
+    startFlicker();
+  }
+
+  function startFlicker(){
+    document.querySelectorAll('[data-page]').forEach(p=>p.hidden=true);
+    const fl=document.getElementById('flicker'); fl.classList.add('on'); fl.innerHTML='';
+    const spool=SHARDS.slice();
+    for(let k=spool.length-1;k>0;k--){const j=(Math.random()*(k+1))|0;[spool[k],spool[j]]=[spool[j],spool[k]];}
+    let spawned=0, si=0, interval=flickerStart, life=flickerStart*2.6;
+    function spawnOne(){
+      if(spawned>=FLICKER_COUNT){
+        setTimeout(()=>{ fl.classList.remove('on'); }, life+120);
+        setTimeout(()=>{ startWriting(); }, life+700);
+        return;
+      }
+      const s=document.createElement('div'); s.className='shard';
+      s.innerHTML = spool[si % spool.length]; si++;
+      const narrow=window.innerWidth<620;
+      const top=10+Math.random()*(narrow?68:74);
+      const left=narrow?(3+Math.random()*18):(4+Math.random()*62);
+      const size=(narrow?1.2:1.3)+Math.random()*(narrow?0.9:1.7);
+      const peak=0.55+Math.random()*0.45;
+      s.style.top=top+'vh'; s.style.left=left+'vw';
+      if(narrow){ s.style.maxWidth='88vw'; s.style.right='auto'; }
+      s.style.fontSize=size+'rem';
+      s.style.setProperty('--peak',peak.toFixed(2));
+      s.style.setProperty('--flashdur',life+'ms');
+      fl.appendChild(s); void s.offsetWidth; s.classList.add('show');
+      setTimeout(()=>{ s.remove(); }, life+80);
+      spawned++;
+      interval=Math.max(interval*FLICKER_SHRINK, FLICKER_MIN);
+      life=Math.max(life*FLICKER_SHRINK, FLICKER_MIN*1.4);
+      setTimeout(spawnOne, interval);
+    }
+    spawnOne();
+  }
+
+  function startWriting(){ document.getElementById('writing').classList.add('on'); }
+
+  // ============================================================
+  // ILLUSTRATION PLATES
+  // Hydrate data-src into the <img>; drop the placeholder frame
+  // once loaded; fade each plate up when scrolled into view.
+  // ============================================================
+  (function initPlates(){
+    const plates = document.querySelectorAll('.plate');
+    if (!plates.length) return;
+
+    plates.forEach(fig => {
+      const src = fig.getAttribute('data-src');
+      const img = fig.querySelector('img');
+      // if the image is already embedded (data URI in preview), leave it alone
+      if (src && img && !img.getAttribute('src')){
+        img.addEventListener('load', () => fig.classList.remove('await'), { once: true });
+        img.addEventListener('error', () => { /* keep placeholder frame if the file isn't there yet */ }, { once: true });
+        img.src = src;
+      }
+    });
+
+    if ('IntersectionObserver' in window){
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting){ e.target.classList.add('seen'); io.unobserve(e.target); }
+        });
+      }, { threshold: 0.2 });
+      plates.forEach(p => io.observe(p));
+    } else {
+      plates.forEach(p => p.classList.add('seen'));
+    }
+  })();
+
+  // ============================================================
+  // THE DOOR THAT UN-WRITES ITSELF
+  // Split 'door' into per-letter spans, then eat it (last→first)
+  // when the reader scrolls the line into view. 'wall' surfaces
+  // through the gap; 'From the wall.' follows.
+  // ============================================================
+  (function initRevise(){
+    const word = document.querySelector('.revise-door .rd-word');
+    if (!word) return;
+    // split the plain text into letter-spans (once)
+    const text = word.textContent;
+    word.textContent = '';
+    for (const ch of text) {
+      const s = document.createElement('span');
+      s.textContent = ch;
+      word.appendChild(s);
+    }
+    const line = document.getElementById('revise-line');
+    const door = document.querySelector('.revise-door');
+    const from = document.querySelector('.rd-from');
+    let fired = false;
+
+    function run(){
+      if (fired) return; fired = true;
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduce){
+        line.classList.add('revised');
+        if (from) from.classList.add('surface');
+        return;
+      }
+      const shake = () => {
+        line.classList.remove('summon');
+        void line.offsetWidth;          // restart the animation cleanly
+        line.classList.add('summon');
+      };
+      // 1) line sits still and readable for 2 seconds
+      setTimeout(() => {
+        shake();                        // 2) first shake (0.9s), then pause
+        // 3) a full second of stillness AFTER the shake settles
+        setTimeout(() => {
+          shake();                      // 4) second shake, then pause
+          // 5) after the second shake settles, the rewrite
+          setTimeout(() => {
+            line.classList.remove('summon');
+            door.classList.add('eating');                 // door comes apart, last→first
+            setTimeout(() => { if (from) from.classList.add('surface'); }, 2100);
+            setTimeout(() => { line.classList.add('revised'); }, 2600); // dash gone, faint haunt
+            setTimeout(() => { line.classList.add('settled'); }, 3200); // wall done: collapse door, period flush
+          }, 1100);
+        }, 900 + 1000);               // shake duration + one second gap
+      }, 2000);
+    }
+
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          // fire only when the line sits solidly in view—the shake then
+          // summons the eye the rest of the way, so exact position needn't match reading speed
+          if (e.isIntersecting && e.intersectionRatio > 0.9) { run(); io.disconnect(); }
+        });
+      }, { threshold: [0, 0.9, 1] });
+      io.observe(line);
+    } else {
+      run();
+    }
+  })();
+
+  // spin up the editing-only nav bar
+  initEditNav();
+</script>
+</body>
+</html>
